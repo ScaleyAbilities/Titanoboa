@@ -1,2 +1,2 @@
 # backend
-Back end repo for the stock trading app
+Backend repo for the stock trading app
