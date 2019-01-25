@@ -1,0 +1,14 @@
+{
+  "ProjectFilePath": "c:\\Users\\Owner\\OneDrive - University of Victoria\\5B\\SENG 468\\scaleyAbilities\\Titanoboa\\Titanoboa.csproj",
+  "TargetFramework": "netcoreapp2.2",
+  "TagHelpers": [],
+  "Configuration": {
+    "ConfigurationName": "UnsupportedRazor",
+    "LanguageVersion": "1.0",
+    "Extensions": [
+      {
+        "ExtensionName": "UnsupportedRazorExtension"
+      }
+    ]
+  }
+}

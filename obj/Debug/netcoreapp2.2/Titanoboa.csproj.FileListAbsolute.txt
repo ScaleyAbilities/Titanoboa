@@ -1,0 +1,11 @@
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\bin\Debug\netcoreapp2.2\Titanoboa.deps.json
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\bin\Debug\netcoreapp2.2\Titanoboa.runtimeconfig.json
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\bin\Debug\netcoreapp2.2\Titanoboa.runtimeconfig.dev.json
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\bin\Debug\netcoreapp2.2\Titanoboa.dll
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\bin\Debug\netcoreapp2.2\Titanoboa.pdb
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\obj\Debug\netcoreapp2.2\Titanoboa.csprojAssemblyReference.cache
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\obj\Debug\netcoreapp2.2\Titanoboa.csproj.CoreCompileInputs.cache
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\obj\Debug\netcoreapp2.2\Titanoboa.AssemblyInfoInputs.cache
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\obj\Debug\netcoreapp2.2\Titanoboa.AssemblyInfo.cs
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\obj\Debug\netcoreapp2.2\Titanoboa.dll
+C:\Users\Owner\OneDrive - University of Victoria\5B\SENG 468\scaleyAbilities\Titanoboa\obj\Debug\netcoreapp2.2\Titanoboa.pdb
