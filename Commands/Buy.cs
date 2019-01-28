@@ -15,7 +15,6 @@ namespace Titanoboa
             3- Insert buy into transactions table, *set pending flag to true*
          */
 
-
         public static void Buy(string userid, string stockSymbol, decimal amount) 
         {
             try
@@ -42,7 +41,6 @@ namespace Titanoboa
             }
             catch (Exception e) {
                 Console.Error.WriteLine(e.Message);
-
             }
         } 
     }
