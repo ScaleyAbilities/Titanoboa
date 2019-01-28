@@ -22,6 +22,9 @@ namespace Titanoboa
                 case "ADD":
                     Commands.Add(userid, amount);
                     break;
+                case "BUY":
+                    Commands.Buy(userid, json.body.StockSymbol, json.body.amount);
+                    break;
                 case "QUOTE":
                     break;
                 case "COMMIT_BUY":
