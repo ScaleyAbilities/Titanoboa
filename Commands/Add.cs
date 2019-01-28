@@ -9,9 +9,9 @@ namespace Titanoboa
     {
         public static void Add(string userid, decimal amount) 
         {
-            decimal balance = Helper.GetUserBalance(userid);
+            decimal balance = TransactionHelper.GetUserBalance(userid);
             balance += amount;
-            if(Helper.UpdateUserBalance(userid, balance))
+            if(TransactionHelper.UpdateUserBalance(userid, balance))
             {
                 Console.WriteLine("Updated user: {0}, balance: {1}", userid, balance);
             }

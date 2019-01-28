@@ -15,31 +15,30 @@ namespace Titanoboa
             3- Insert buy into transactions table, *set pending flag to true*
          */
 
-        public static void Buy(string userid, string stocksymbol, decimal amount, MySqlConnection connection) 
+        public static void Buy(string userid, string stockSymbol, decimal amount) 
         {
             try
             {
-                //Update DB 
-                MySqlCommand command = new MySqlCommand();
-                command.Connection = connection;
-
                 // Get users current balance
-                var userbalance = Helper.GetUserBalance(userid);
+                var userbalance = TransactionHelper.GetUserBalance(userid);
                 if(userbalance < amount)
                 {
                     // Throw insufficient funds exception
                 }
 
                 // Get current stock price -- TO DO in helper
-                var stockprice = (decimal)Helper.GetStockPrice(StockSymbol);
+                var stockprice = (decimal)TransactionHelper.GetStockPrice(stockSymbol);
                 if(amount < stockprice)
                 {
                     // Throw not enough money for stock expection
                 }
 
-                var stockamount = ((integer)amount/stockprice)
+                var stockAmount = (int)Math.Floor(amount/stockprice);
 
-                Helper.AddTransaction(userid, userbalance, stocksymbol, "BUY", stockamount*stockprice, stockamount, true)
+                TransactionHelper.AddTransaction(userid, userbalance, stockSymbol, "BUY", stockAmount*stockprice, stockAmount, true);
+            }
+            catch (Exception e) {
+                Console.Error.WriteLine(e.Message);
             }
         } 
     }
