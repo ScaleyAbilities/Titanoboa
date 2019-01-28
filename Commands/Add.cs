@@ -7,25 +7,18 @@ namespace Titanoboa
 {
     public static partial class Commands
     {
-        public static void Add(string userid, decimal amount, MySqlConnection connection) 
+        public static void Add(string userid, decimal amount) 
         {
-            //Update DB 
-            MySqlCommand command = new MySqlCommand();
-            command.Connection = connection;
-
-            command.CommandText = "SELECT Balance FROM Users WHERE UserId==@userid";
-            command.Prepare();
-            command.Parameters.AddWithValue("@userid", userid);
-            var balance = (decimal)command.ExecuteScalar();
+            decimal balance = Helper.GetUserBalance(userid);
             balance += amount;
-
-            command.CommandText = "INSERT INTO Users VALUE(@userid, @amount)";
-            command.Prepare();
-
-            command.Parameters.AddWithValue("@userid", userid);
-            command.Parameters.AddWithValue("@amount", balance);
-            command.ExecuteNonQuery();
-
+            if(Helper.UpdateUserBalance(userid, balance))
+            {
+                Console.WriteLine("Updated user: {0}, balance: {1}", userid, balance);
+            }
+            else
+            {
+                Console.WriteLine("Error! Updating user: {0}, balance: {1} FAILED", userid, balance);
+            }
         } 
 
     }
