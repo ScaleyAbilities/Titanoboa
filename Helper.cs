@@ -41,6 +41,21 @@ namespace Titanoboa
             return res;  
         }
 
+        public static bool AddTransaction(string userid, decimal balance, string stocksymbol, string command, decimal balancechange, int stockamount, bool pending){
+            MySqlCommand command = CreateSqlCommand();
+            command.Prepare();
+            command.CommandText = "INSERT INTO transactions (userid, balance, stocksymbol, command, balancechange, stockamount, pending) \
+                                    values ('@userid', '@balance', '@stocksymbol', '@command', '@balancechange', '@stockamount', '@pending')";
+            command.Parameters.AddWithValue("@userid", userid);
+            command.Parameters.AddWithValue("@balance", balance);
+            command.Parameters.AddWithValue("@stocksymbol", stocksymbol);
+            command.Parameters.AddWithValue("@command", command);
+            command.Parameters.AddWithValue("@balancechange", balancechange);
+            command.Parameters.AddWithValue("@stockamount", stockamount);
+            command.Parameters.AddWithValue("@pending", pending);
+            return ExcecuteNonQuerySqlCommand(command)
+        }
+
         public static bool AddUser(string userid, decimal balance) {
             MySqlCommand command = CreateSqlCommand();
             command.CommandText = "INSERT INTO users (balance, userid) Values ('@balance', '@userid')";
