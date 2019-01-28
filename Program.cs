@@ -60,26 +60,27 @@ namespace Titanoboa
         static void Main(string[] args)
         {
             //DB config -- TODO
-            string connectionString = "";
+            string connectionString = "Server=localhost;Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
 
             //Establish DB Connection
             connection = new MySqlConnection(connectionString);
 
             try
             {
+                // Open Connection
                 Console.WriteLine("Connecting to Daboia...");
                 connection.Open();
                 
-                //Run through queue -- TODO
+                // Run through queue -- TODO
                 while(!Queue.isempty())
                 {
                     string packet = Queue.pop();
                     RunCommands(packet);
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Console.WriteLine(ex.ToString());
+                Console.Error.WriteLine(e.Message);
             }
 
             connection.Close();
