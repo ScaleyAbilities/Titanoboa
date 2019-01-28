@@ -2,21 +2,25 @@
 using System.Data;
 using MySql.Data;
 using MySql.Data.MySqlClient;
+using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
     class Program
     {
-        static void RunCommands(string packet)
+        internal static MySqlConnection connection;
+
+        static void RunCommands(JObject packet)
         {
             //TODO
-            string command = packet.body.command;
-            string userid = packet.body.userid;
+            string command = packet["command"].ToString();
+            string userid = packet["userid"].ToString();
+            int amount = (int)packet["amount"];
 
             switch (command)
             {
                 case "ADD":
-                    Commands.Add(userid, json.body.amount, connection);
+                    Commands.Add(userid, amount);
                     break;
                 case "QUOTE":
                     break;
@@ -46,6 +50,9 @@ namespace Titanoboa
                     break;
                 case "DISPLAY_SUMMARY":
                     break;
+                default:
+                    break;
+
 
             }
         }
@@ -56,11 +63,11 @@ namespace Titanoboa
             string connectionString = "";
 
             //Establish DB Connection
-            MySqlConnection connection = new MySqlConnection(connectionString);
+            connection = new MySqlConnection(connectionString);
 
             try
             {
-                Console.WriteLine("Connecting to MySQL...");
+                Console.WriteLine("Connecting to Daboia...");
                 connection.Open();
                 
                 //Run through queue -- TODO
