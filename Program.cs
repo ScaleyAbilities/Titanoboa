@@ -62,8 +62,7 @@ namespace Titanoboa
 
         static void Main(string[] args)
         {
-            string connectionString = "Server=localhost;Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
-            SqlHelper.openSqlConnection(connectionString);
+            SqlHelper.openSqlConnection();
                 
             // Run through queue -- TODO
             while(!Queue.isempty())
@@ -74,8 +73,6 @@ namespace Titanoboa
             
             //Close connection
             SqlHelper.closeSqlConnection();
-
-
         }
     }
 }
