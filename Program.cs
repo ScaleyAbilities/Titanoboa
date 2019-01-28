@@ -67,15 +67,16 @@ namespace Titanoboa
 
             try
             {
+                // Open Connection
                 Console.WriteLine("Connecting to Daboia...");
                 connection.Open();
                 
-                //Run through queue -- TODO
-                // while(!Queue.isempty())
-                // {
-                //     string packet = Queue.pop();
-                //     RunCommands(packet);
-                // }
+                // Run through queue -- TODO
+                while(!Queue.isempty())
+                {
+                    string packet = Queue.pop();
+                    RunCommands(packet);
+                }
             }
             catch (Exception e)
             {
