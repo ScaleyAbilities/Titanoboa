@@ -15,6 +15,7 @@ namespace Titanoboa
             3- Insert buy into transactions table, *set pending flag to true*
          */
 
+
         public static void Buy(string userid, string stockSymbol, decimal amount) 
         {
             try
@@ -22,6 +23,7 @@ namespace Titanoboa
                 // Get users current balance
                 var userbalance = TransactionHelper.GetUserBalance(userid);
                 if(userbalance < amount)
+
                 {
                     // Throw insufficient funds exception
                 }
@@ -29,6 +31,7 @@ namespace Titanoboa
                 // Get current stock price -- TO DO in helper
                 var stockprice = (decimal)TransactionHelper.GetStockPrice(stockSymbol);
                 if(amount < stockprice)
+
                 {
                     // Throw not enough money for stock expection
                 }
@@ -39,6 +42,7 @@ namespace Titanoboa
             }
             catch (Exception e) {
                 Console.Error.WriteLine(e.Message);
+
             }
         } 
     }
