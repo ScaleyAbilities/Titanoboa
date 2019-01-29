@@ -10,20 +10,20 @@ namespace Titanoboa
     {
         internal static MySqlConnection connection;
 
-        static void RunCommands(JObject packet)
+        static void RunCommands(JObject json)
         {
-            //TODO
-            string command = packet["command"].ToString();
-            string userid = packet["userid"].ToString();
-            int amount = (int)packet["amount"];
+    
+            string command = json["command"].ToString();
+            string userid = json["userid"].ToString();
+            JObject commandParams = (JObject)json["params"];
 
             switch (command)
             {
                 case "ADD":
-                    Commands.Add(userid, amount);
+                    Commands.Add(userid, commandParams);
                     break;
                 case "BUY":
-                    Commands.Buy(userid, json.body.StockSymbol, json.body.amount);
+                    Commands.Buy(userid, commandParams);
                     break;
                 case "QUOTE":
                     break;
