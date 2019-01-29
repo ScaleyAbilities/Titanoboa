@@ -3,7 +3,6 @@ using System.Data;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
-
 namespace Titanoboa
 {
     public static class TransactionHelper
@@ -49,6 +48,12 @@ namespace Titanoboa
             return SqlHelper.ExcecuteScalarSqlCommand(command);
         }
 
+        // Method to output json object of all transactions or tansactions for single user.
+        internal static JObject GetTransactions(string userid, bool isAdmin)
+        {
+            throw new NotImplementedException();
+        }
+
         public static object GetUserBalance(string userid) 
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
@@ -65,6 +70,11 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@userid", userid);
             var balance = SqlHelper.ExcecuteScalarSqlCommand(command);
             return balance;
+        }
+
+        internal static bool IsAdmin(string userid)
+        {
+            throw new NotImplementedException();
         }
 
         public static bool UpdateUserBalance(string userid, decimal balance) 
