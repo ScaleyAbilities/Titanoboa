@@ -39,7 +39,7 @@ namespace Titanoboa
             throw new NotImplementedException();
         }
 
-        internal static Integer GetStocks(string userid, string stockSymbol)
+        public static Integer GetStocks(string userid, string stockSymbol)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = "SELECT amount FROM stocks WHERE stocksymbol = @'stockSymbol' AND userid = @'userid'";
