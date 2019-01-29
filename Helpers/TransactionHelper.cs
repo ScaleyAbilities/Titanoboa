@@ -75,14 +75,7 @@ namespace Titanoboa
         public static bool IsAdmin(string userid)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
-            command.CommandText = @"
-                SELECT CASE WHEN EXISTS(
-                    SELECT * FROM users WHERE 
-                    userid = @userid AND 
-                    isadmin
-                )
-                THEN CAST(1 AS BIT)
-                ELSE CAST(0 AS BIT) END";
+            command.CommandText = @"SELECT if(isadmin) FROM users WHERE userid = @userid"                
             command.Prepare();
             command.Parameters.AddWithValue("@userid", userid);
             return SqlHelper.ExcecuteScalarSqlCommand(command);
