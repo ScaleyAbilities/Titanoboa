@@ -10,8 +10,7 @@ namespace Titanoboa
     {
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
         private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";  
-        public static bool openSqlConnection() {
-            
+        public static void openSqlConnection() {
             Program.connection = new MySqlConnection(connectionString);
             try
             {
@@ -22,8 +21,8 @@ namespace Titanoboa
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
+                Environment.Exit(1);
             }
-            return true;
         }
 
         public static bool closeSqlConnection() {

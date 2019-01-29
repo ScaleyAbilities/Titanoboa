@@ -37,12 +37,12 @@ namespace Titanoboa
             return SqlHelper.ExcecuteNonQuerySqlCommand(command);
         }
 
-        public static decimal GetUserBalance(string userid) {
+        public static object GetUserBalance(string userid) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = "SELECT balance FROM users WHERE userid==@userid";
             command.Prepare();
             command.Parameters.AddWithValue("@userid", userid);
-            var balance = (decimal)SqlHelper.ExcecuteScalarSqlCommand(command);
+            var balance = SqlHelper.ExcecuteScalarSqlCommand(command);
             return balance;
         }
 

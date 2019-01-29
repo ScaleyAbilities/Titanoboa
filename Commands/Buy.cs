@@ -14,9 +14,6 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks)
             3- Insert buy into transactions table, *set pending flag to true*
          */
-
-
-
         public static void Buy(string userid, string stockSymbol, decimal amount) 
         {
             try
@@ -31,7 +28,6 @@ namespace Titanoboa
                 // Get current stock price -- TO DO in helper
                 var stockprice = (decimal)TransactionHelper.GetStockPrice(stockSymbol);
                 if(amount < stockprice)
-
                 {
                     throw new System.InvalidOperationException("Not enough money for stock purchase.");
                 }
