@@ -33,12 +33,4 @@ namespace Titanoboa
             return true;
         }
     }
-    public static int Main(String[] args) {
-        if(connectionEstablished()){
-            return 0;
-        }
-        else{
-            return 1;
-        }
-    }
 }
