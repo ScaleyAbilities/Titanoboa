@@ -74,7 +74,18 @@ namespace Titanoboa
 
         internal static bool IsAdmin(string userid)
         {
-            throw new NotImplementedException();
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            command.CommandText = @"
+                SELECT CASE WHEN EXISTS(
+                    SELECT * FROM users WHERE 
+                    userid = @userid AND 
+                    isadmin
+                )
+                THEN CAST(1 AS BIT)
+                ELSE CAST(0 AS BIT) END";
+            command.Prepare();
+            command.Parameters.AddWithValue("@userid", userid);
+            return SqlHelper.ExcecuteScalarSqlCommand(command);
         }
 
         public static bool UpdateUserBalance(string userid, decimal balance) 
