@@ -72,7 +72,7 @@ namespace Titanoboa
             return balance;
         }
 
-        internal static bool IsAdmin(string userid)
+        public static bool IsAdmin(string userid)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = @"
