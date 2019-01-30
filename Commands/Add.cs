@@ -10,6 +10,8 @@ namespace Titanoboa
     {
         public static void Add(string userid, JObject commandParams) 
         {
+            ParamHelper.ValidateParamsExist(commandParams, "amount");
+            
             bool res;
             decimal amount = (decimal)commandParams["amount"];
             var balance = TransactionHelper.GetUserBalance(userid);
