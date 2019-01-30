@@ -30,6 +30,7 @@ namespace Titanoboa
             Console.WriteLine("Done.");
             return true;
         }
+        
          public static MySqlCommand CreateSqlCommand() {
             MySqlCommand command = new MySqlCommand();
             command.Connection = Program.connection;

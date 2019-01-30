@@ -12,7 +12,6 @@ namespace Titanoboa
         {
             ParamHelper.ValidateParamsExist(commandParams, "amount");
             
-            bool res;
             decimal amount = (decimal)commandParams["amount"];
             var balance = TransactionHelper.GetUserBalance(userid);
 
