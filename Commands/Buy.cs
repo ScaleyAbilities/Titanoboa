@@ -17,6 +17,8 @@ namespace Titanoboa
          */
         public static void Buy(string userid, JObject commandParams) 
         {
+            ParamHelper.ValidateParamsExist(commandParams, "amount");
+
             //Unpack JObject
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stockSymbol"].ToString();

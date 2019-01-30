@@ -12,6 +12,16 @@ namespace Titanoboa
 
         static void RunCommands(JObject json)
         {
+            try
+            {
+                ParamHelper.ValidateParamsExist(json, "cmd", "uid", "params");
+            }                
+            catch (ArgumentException ex)
+            {
+                Console.Error.WriteLine($"Error in Queue JSON: {ex.Message}");
+                return;
+            }
+
             string command = json["cmd"].ToString();
             string userid = json["uid"].ToString();
             JObject commandParams = (JObject)json["params"];
