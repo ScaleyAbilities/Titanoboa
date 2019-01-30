@@ -19,32 +19,32 @@ namespace Titanoboa
         {
             ParamHelper.ValidateParamsExist(commandParams, "amount");
 
-            //Unpack JObject
+            // Unpack JObject
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stockSymbol"].ToString();
 
             // Get users current balance
             var balance = TransactionHelper.GetUserBalance(userid);
             
-            //Check if user exists
-            if(balance == null)
+            // Check if user exists
+            if (balance == null)
             {
-                throw new System.InvalidOperationException("User does not exist.");
+                throw new InvalidOperationException("User does not exist.");
             } 
-            else if((decimal)balance < amount)
+            else if (balance < amount)
             {
-                throw new System.InvalidOperationException("Insufficient funds.");
+                throw new InvalidOperationException("Insufficient funds.");
             }
 
             // Get current stock price -- TO DO in helper
-            var stockPrice = (decimal)TransactionHelper.GetStockPrice(stockSymbol);
-            if(amount < stockPrice)
+            var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);
+            if (amount < stockPrice)
             {
-                throw new System.InvalidOperationException("Not enough money for stock purchase.");
+                throw new InvalidOperationException("Not enough money for stock purchase.");
             }
 
-            var stockAmount = (int)Math.Floor(amount/stockPrice);
-            var balanceChange = stockAmount*stockPrice*-1;
+            var stockAmount = (int)(amount / stockPrice);
+            var balanceChange = stockAmount * stockPrice * -1;
 
             TransactionHelper.AddTransaction(userid, (decimal)balance, stockSymbol, "BUY", balanceChange, stockAmount, true);
         } 

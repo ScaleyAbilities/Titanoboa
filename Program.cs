@@ -73,7 +73,18 @@ namespace Titanoboa
             {
                 Console.Error.WriteLine($"Invalid parameters for command '{command}': {ex.Message}");
             }
-            
+            catch (InvalidOperationException ex)
+            {
+                Console.Error.WriteLine($"Command '{command}' could not be run: {ex.Message}");
+            }
+            catch (MySqlException ex)
+            {
+                Console.Error.WriteLine($"Command '{command}' encountered a SQL error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Command '{command}' encountered an unexpected error: {ex.Message}");
+            }
         }
 
         static void Main(string[] args)
