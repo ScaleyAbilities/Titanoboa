@@ -24,11 +24,6 @@ namespace Titanoboa
             command.ExecuteNonQuery();
         }
 
-        internal static decimal GetStockPrice(string stockSymbol)
-        {
-            throw new NotImplementedException();
-        }
-
         public static void AddUser(string userid, decimal balance) 
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
@@ -37,6 +32,21 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@balance", balance);
             command.Parameters.AddWithValue("@userid", userid);
             command.ExecuteNonQuery();
+        }
+
+        internal static decimal GetStockPrice(string stockSymbol)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static int GetStocks(string userid, string stockSymbol)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            command.CommandText = "SELECT amount FROM stocks WHERE stocksymbol = @'stockSymbol' AND userid = @'userid'";
+            command.Prepare();
+            command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+            command.Parameters.AddWithValue("@userid", userid);
+            return (int?)command.ExecuteScalar() ?? 0;
         }
 
         public static decimal? GetUserBalance(string userid) 
