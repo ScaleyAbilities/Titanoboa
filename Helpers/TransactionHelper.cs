@@ -36,7 +36,8 @@ namespace Titanoboa
 
         internal static decimal GetStockPrice(string stockSymbol)
         {
-            throw new NotImplementedException();
+            // TODO: this
+            return 1;
         }
 
         public static int GetStocks(string userid, string stockSymbol)

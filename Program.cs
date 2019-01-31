@@ -14,7 +14,7 @@ namespace Titanoboa
         {
             try
             {
-                ParamHelper.ValidateParamsExist(json, "cmd", "uid", "params");
+                ParamHelper.ValidateParamsExist(json, "cmd", "uid");
             }                
             catch (ArgumentException ex)
             {
