@@ -144,10 +144,23 @@ namespace Titanoboa
             return 1;
         }
 
-        public static int GetStocks(User user, string stockSymbol)
+        public static int GetStocks(User user, string stockSymbol, bool includePending = false)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
-            command.CommandText = @"SELECT amount FROM stocks WHERE stocksymbol = @stockSymbol AND userid = @userid";
+
+            if(!includePending) {
+                command.CommandText = @"SELECT amount FROM stocks WHERE stocksymbol = @stockSymbol AND userid = @userid";
+            }
+            else
+            {
+                command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
+                                        FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
+                                        AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                        AND transactions.command = ""SELL""
+                                        AND transactions.pendingflag = 1
+                                        AND transactions.stocksymbol = @stockSymbol
+                                        WHERE users.username = @username";
+            }
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
