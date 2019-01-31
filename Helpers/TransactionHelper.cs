@@ -81,33 +81,49 @@ namespace Titanoboa
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
-            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag) 
-                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending)";
+            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag, transactiontime) 
+                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending, @curTime)";
             command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@stocksymbol", stockSymbol);
             command.Parameters.AddWithValue("@command", commandText);
             command.Parameters.AddWithValue("@balancechange", balanceChange);
             command.Parameters.AddWithValue("@stockamount", stockAmount);
             command.Parameters.AddWithValue("@pending", pending);
+            command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.ExecuteNonQuery();
         }
 
-        public static MySqlDataReader GetMostRecentTransaction(string userid, string commandText, int pending) {
+        public static Transaction GetLatestPendingTransaction(User user, string commandText) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
-            command.CommandText = @"SELECT * FROM transactions WHERE transactions.userid = @userid 
-                                AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
-                                AND transactions.command = @commandText
-                                AND transactions.pendingflag = @pending
-                                ORDER BY transactions.transactiontime DESC
-                                LIMIT 1";
+            command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
+                                    AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                    AND transactions.command = @commandText
+                                    AND transactions.pendingflag = 1
+                                    ORDER BY transactions.transactiontime DESC
+                                    LIMIT 1";
+            
             command.Prepare();
-            command.Parameters.AddWithValue("@userid", userid);
+            command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.Parameters.AddWithValue("@commandText", commandText);
-            command.Parameters.AddWithValue("@pending", pending);
-            MySqlDataReader mostRecentTransaction = command.ExecuteReader();
-            return mostRecentTransaction;
+
+            Transaction transaction = null;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    reader.Read();
+                    transaction = new Transaction() {
+                        Id = (int)reader["id"],
+                        BalanceChange = (decimal)reader["balancechange"],
+                        StockSymbol = (string)reader["stocksymbol"],
+                        StockAmount = (int)reader["stockamount"]
+                    };
+                }
+            }
+
+            return transaction;
         }
 
         internal static decimal GetStockPrice(string stockSymbol)
