@@ -93,7 +93,13 @@ namespace Titanoboa
         }
 
         // Method to output json object of all transactions or tansactions for single user.
-        internal static JObject GetTransactions(string userid, bool isAdmin)
+        internal static JObject GetAllLogs()
+        {
+            throw new NotImplementedException();
+        }
+
+        // Method to output json object of all transactions or tansactions for single user.
+        internal static JObject GetUserLogs(User user)
         {
             throw new NotImplementedException();
         }
@@ -133,11 +139,13 @@ namespace Titanoboa
 
         public static bool IsAdmin(string userid)
         {
+            // This is unused and won't work right now cuause we don't have admin info in the db
+
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = @"SELECT if(isadmin) FROM users WHERE userid = @userid"; 
             command.Prepare();
             command.Parameters.AddWithValue("@userid", userid);
-            return SqlHelper.ExcecuteScalarSqlCommand(command);
+            return (bool)command.ExecuteScalar();
         }
 
         internal static decimal GetStockPrice(string stockSymbol)

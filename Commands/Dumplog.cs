@@ -20,40 +20,35 @@ namespace Titanoboa
                 - get transactions by user
                 - write xml
          */
-        public static void Dumplog(string userid, JObject commandParams) 
+        public static void Dumplog(string username, JObject commandParams)
         {
-            if(length(commandParams) > 1){
-                DumplogUserTans(userid, commandParams);
-            }
-            else if(length(commandParams) == 1){
-                DumplofTrans(userid, commandParams);
-            }
-        }
+            ParamHelper.ValidateParamsExist(commandParams, "filename");
 
-        private static void DumplogTans(string userid, JObject commandParams)
-        {
-            var filename = commandParams["filename"];
-            bool isAdmin;
-            if(isAdmin = TransactionHelper.IsAdmin(userid))
+            var filename = (string)commandParams["filename"];
+
+            if (username != null)
             {
-                Console.WriteLine("Getting all transactions...");
-                JObject trans = TransactionHelper.GetTransactions(userid, isAdmin);
-            
-                // TO DO - write xml to user specified file.
+                DumplogUser(username, filename);
             }
             else
             {
-                Console.WriteLine("Inadequite permissions to access all transactions.");
-                throw new System.InvalidOperationException("Invalid permissions");
+                DumplogAll(filename);
             }
         }
-        
-        private static void DumplogUserTans(string userid, JObject commandParams)
-        {
-            var filename = commandParams["filename"];
-            JObject trans = TransactionHelper.GetTransactions(userid, false);
 
+        private static void DumplogAll(string filename)
+        {
+            // For now we just assume the user is allowed to do this
+            Console.WriteLine("Getting all transactions...");
+            JObject trans = TransactionHelper.GetAllLogs();
+            
             // TO DO - write xml to user specified file.
+        }
+        
+        private static void DumplogUser(string username, string filename)
+        {
+            var user = TransactionHelper.GetUser(username);
+            JObject trans = TransactionHelper.GetUserLogs(user);
         }
     }
 }

@@ -5,7 +5,9 @@ using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Xml;
-using Xsd.Logfile.cs;
+
+// Commenting this out cause it's causing an error
+// using Xsd.Logfile.cs;
 
 namespace Titanoboa
 {
@@ -15,7 +17,8 @@ namespace Titanoboa
         {
             XmlWriter logWriter = XmlWriter.Create("./Logfiles/Logfile.xml");
             logWriter.WriteStartDocument();
-            return logWriter.WriteStartElement("Log");
+            logWriter.WriteStartElement("Log");
+            return logWriter;
         }
     }
 }
