@@ -1,3 +1,6 @@
+using MySql.Data.MySqlClient;
+using System;
+
 namespace Titanoboa
 {
     public static partial class Commands 
@@ -11,6 +14,23 @@ namespace Titanoboa
          */
         public static void CommitBuy(string userid) {
             
+            var transaction = TransactionHelper.GetLatestPendingTransaction(userid, "BUY");
+
+            if(transaction == null) {
+                throw new InvalidOperationException("No pending BUY transactions to commit.");
+            }
+
+            var user = TransactionHelper.GetUser(userid, false);
+
+            var newBalance = user.Balance - transaction.BalanceChance;
+            TransactionHelper.UpdateUserBalance(ref user, newBalance);
+
+            var stockName = transaction.StockSymbol;
+            var stockAmount = transaction.StockAmount;
+
+            TransactionHelper.UpdateStock(ref user, stockName, stockAmount);
+            TransactionHelper.CommitTransaction(ref transaction);
+
         }
     }
 }
