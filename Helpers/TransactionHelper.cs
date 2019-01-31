@@ -8,7 +8,7 @@ namespace Titanoboa
 {
     public static class TransactionHelper
     {
-        public static bool AddTransaction(string userid, decimal balance, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
+        public static void AddTransaction(string userid, decimal balance, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
@@ -21,17 +21,17 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@balancechange", balanceChange);
             command.Parameters.AddWithValue("@stockamount", stockAmount);
             command.Parameters.AddWithValue("@pending", pending);
-            return SqlHelper.ExcecuteNonQuerySqlCommand(command);
+            command.ExecuteNonQuery();
         }
 
-        public static bool AddUser(string userid, decimal balance) 
+        public static void AddUser(string userid, decimal balance) 
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = "INSERT INTO users (balance, userid) Values ('@balance', '@userid')";
             command.Prepare();
             command.Parameters.AddWithValue("@balance", balance);
             command.Parameters.AddWithValue("@userid", userid);
-            return SqlHelper.ExcecuteNonQuerySqlCommand(command);
+            command.ExecuteNonQuery();
         }
 
         internal static decimal GetStockPrice(string stockSymbol)
@@ -39,17 +39,17 @@ namespace Titanoboa
             throw new NotImplementedException();
         }
 
-        public static Integer GetStocks(string userid, string stockSymbol)
+        public static int? GetStocks(string userid, string stockSymbol)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = "SELECT amount FROM stocks WHERE stocksymbol = @'stockSymbol' AND userid = @'userid'";
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", userid);
-            return SqlHelper.ExcecuteScalarSqlCommand(command);
+            return (int?)command.ExecuteScalar();
         }
 
-        public static object GetUserBalance(string userid) 
+        public static decimal? GetUserBalance(string userid) 
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
@@ -63,18 +63,18 @@ namespace Titanoboa
             command.Prepare();
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.Parameters.AddWithValue("@userid", userid);
-            var balance = SqlHelper.ExcecuteScalarSqlCommand(command);
+            var balance = (decimal?)command.ExecuteScalar();
             return balance;
         }
 
-        public static bool UpdateUserBalance(string userid, decimal balance) 
+        public static void UpdateUserBalance(string userid, decimal balance) 
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = "UPDATE users SET balance = @balance WHERE userid=@userid";
             command.Prepare();
             command.Parameters.AddWithValue("@balance", balance);
             command.Parameters.AddWithValue("@userid", userid);
-            return SqlHelper.ExcecuteNonQuerySqlCommand(command);
+            command.ExecuteNonQuery();
         }
     }
 }

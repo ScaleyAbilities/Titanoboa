@@ -10,30 +10,25 @@ namespace Titanoboa
     {
         public static void Add(string userid, JObject commandParams) 
         {
-            bool res;
+            ParamHelper.ValidateParamsExist(commandParams, "amount");
+            
             decimal amount = (decimal)commandParams["amount"];
             var balance = TransactionHelper.GetUserBalance(userid);
-            if(balance == null)
+
+            if (balance == null)
             {
                 //User does not exist
                 Console.WriteLine("User does not exist, adding new user: {0}", userid);
-                res = TransactionHelper.AddUser(userid, amount);
+                TransactionHelper.AddUser(userid, amount);
             }
             else
             {
                 //Update existing user balance
                 decimal newBalance = (decimal)balance + amount;
-                res = TransactionHelper.UpdateUserBalance(userid, newBalance);
+                TransactionHelper.UpdateUserBalance(userid, newBalance);
             }
-            
-            if(res)
-            {
-                Console.WriteLine("Updated user: {0}, balance: {1}", userid, balance);
-            }
-            else
-            {
-                Console.WriteLine("Error! Updating user: {0}, balance: {1} FAILED", userid, balance);
-            }
+
+            Console.WriteLine("Updated user: {0}, balance: {1}", userid, balance);
         } 
 
     }
