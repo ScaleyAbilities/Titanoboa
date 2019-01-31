@@ -17,11 +17,11 @@ namespace Titanoboa
          */
         public static void Buy(string username, JObject commandParams) 
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stockSymbol");
+            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
 
             // Unpack JObject
             var amount = (decimal)commandParams["amount"];
-            var stockSymbol = commandParams["stockSymbol"].ToString();
+            var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username);

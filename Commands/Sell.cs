@@ -16,10 +16,10 @@ namespace Titanoboa
          */
         public static void Sell(string username, JObject commandParams)
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stockSymbol");
+            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
 
             var sellAmount = (decimal)commandParams["amount"];
-            var stockSymbol = commandParams["stockSymbol"].ToString();
+            var stockSymbol = commandParams["stock"].ToString();
 
             // Get current stock price
             var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);

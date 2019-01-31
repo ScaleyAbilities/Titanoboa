@@ -59,7 +59,7 @@ namespace Titanoboa
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
-            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pending) 
+            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag) 
                                     values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending)";
             command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@stocksymbol", stockSymbol);
