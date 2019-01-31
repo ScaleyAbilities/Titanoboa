@@ -8,27 +8,18 @@ namespace Titanoboa
 {
     public static partial class Commands
     {
-        public static void Add(string userid, JObject commandParams) 
+        public static void Add(string username, JObject commandParams) 
         {
             ParamHelper.ValidateParamsExist(commandParams, "amount");
             
             decimal amount = (decimal)commandParams["amount"];
-            var balance = TransactionHelper.GetUserPendingBalance(userid);
+            var user = TransactionHelper.GetUser(username);
 
-            if (balance == null)
-            {
-                //User does not exist
-                Console.WriteLine("User does not exist, adding new user: {0}", userid);
-                TransactionHelper.AddUser(userid, amount);
-            }
-            else
-            {
-                //Update existing user balance
-                decimal newBalance = (decimal)balance + amount;
-                TransactionHelper.UpdateUserBalance(userid, newBalance);
-            }
+            //Update existing user balance
+            decimal newBalance = user.Balance + amount;
+            TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
-            Console.WriteLine("Updated user: {0}, balance: {1}", userid, balance);
+            Console.WriteLine("Updated user: {0}, balance: {1}", user.Username, user.Balance);
         } 
 
     }

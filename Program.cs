@@ -14,7 +14,7 @@ namespace Titanoboa
         {
             try
             {
-                ParamHelper.ValidateParamsExist(json, "cmd", "uid", "params");
+                ParamHelper.ValidateParamsExist(json, "cmd", "usr");
             }                
             catch (ArgumentException ex)
             {
@@ -23,7 +23,7 @@ namespace Titanoboa
             }
 
             string command = json["cmd"].ToString();
-            string userid = json["uid"].ToString();
+            string username = json["usr"].ToString();
             JObject commandParams = (JObject)json["params"];
 
             try 
@@ -31,10 +31,10 @@ namespace Titanoboa
                 switch (command.ToUpperInvariant())
                 {
                     case "ADD":
-                        Commands.Add(userid, commandParams);
+                        Commands.Add(username, commandParams);
                         break;
                     case "BUY":
-                        Commands.Buy(userid, commandParams);
+                        Commands.Buy(username, commandParams);
                         break;
                     case "QUOTE":
                         break;
@@ -43,8 +43,10 @@ namespace Titanoboa
                     case "CANCEL_BUY":
                         break;
                     case "SELL":
+                        Commands.Sell(username, commandParams);
                         break;
                     case "COMMIT_SELL":
+                        Commands.CommitSell(username);
                         break;
                     case "SET_BUY_AMOUNT":
                         break;

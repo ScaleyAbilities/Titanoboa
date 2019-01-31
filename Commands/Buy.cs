@@ -15,28 +15,23 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks)
             3- Insert buy into transactions table, *set pending flag to true*
          */
-        public static void Buy(string userid, JObject commandParams) 
+        public static void Buy(string username, JObject commandParams) 
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount");
+            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
 
             // Unpack JObject
             var amount = (decimal)commandParams["amount"];
-            var stockSymbol = commandParams["stockSymbol"].ToString();
+            var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var balance = TransactionHelper.GetUserPendingBalance(userid);
+            var user = TransactionHelper.GetUser(username);
             
-            // Check if user exists
-            if (balance == null)
-            {
-                throw new InvalidOperationException("User does not exist.");
-            } 
-            else if (balance < amount)
+            if (user.Balance < amount)
             {
                 throw new InvalidOperationException("Insufficient funds.");
             }
 
-            // Get current stock price -- TO DO in helper
+            // Get current stock price
             var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);
             if (amount < stockPrice)
             {
@@ -46,7 +41,7 @@ namespace Titanoboa
             var stockAmount = (int)(amount / stockPrice);
             var balanceChange = stockAmount * stockPrice * -1;
 
-            TransactionHelper.AddTransaction(userid, (decimal)balance, stockSymbol, "BUY", balanceChange, stockAmount, true);
+            TransactionHelper.AddTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, true);
         } 
     }
 }

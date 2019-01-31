@@ -12,7 +12,8 @@ namespace Titanoboa
          */
         public static void ValidateParamsExist(JObject commandParams, params string[] expectedParams)
         {
-            var missingParams = expectedParams.Where(param => !commandParams.ContainsKey(param));
+            var missingParams = (commandParams == null) ? expectedParams : 
+                expectedParams.Where(param => !commandParams.ContainsKey(param));
             
             if (missingParams.Any())
             {
