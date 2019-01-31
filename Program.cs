@@ -43,6 +43,7 @@ namespace Titanoboa
                     case "CANCEL_BUY":
                         break;
                     case "SELL":
+                        Commands.Sell(username, commandParams);
                         break;
                     case "COMMIT_SELL":
                         Commands.CommitSell(username);
