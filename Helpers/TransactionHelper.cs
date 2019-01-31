@@ -39,7 +39,7 @@ namespace Titanoboa
             command.ExecuteNonQuery();
         }
 
-        public static decimal? GetUserBalance(string userid) 
+        public static decimal? GetUserPendingBalance(string userid) 
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
@@ -55,6 +55,35 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@userid", userid);
             var balance = (decimal?)command.ExecuteScalar();
             return balance;
+        }
+
+        public static decimal? GetUserActualBalance(string userid) 
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = "SELECT balance FROM users WHERE user.id = @userid";
+            command.Prepare();
+            command.Parameters.AddWithValue("@userid", userid);
+            var balance = (decimal?)command.ExecuteScalar();
+            return balance;
+        }
+
+        public static MySqlDataReader GetMostRecentTransaction(string userid, string commandText, int pending) {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"SELECT * FROM transactions WHERE transactions.userid = @userid 
+                                AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                AND transactions.command = @commandText
+                                AND transactions.pendingflag = @pending
+                                ORDER BY transactions.transactiontime DESC
+                                LIMIT 1";
+            command.Prepare();
+            command.Parameters.AddWithValue("@userid", userid);
+            command.Parameters.AddWithValue("@curTime", DateTime.Now);
+            command.Parameters.AddWithValue("@commandText", commandText);
+            command.Parameters.AddWithValue("@pending", pending);
+            MySqlDataReader mostRecentTransaction = command.ExecuteReader();
+            return mostRecentTransaction;
         }
 
         public static void UpdateUserBalance(string userid, decimal balance) 

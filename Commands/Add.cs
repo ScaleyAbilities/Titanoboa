@@ -13,7 +13,7 @@ namespace Titanoboa
             ParamHelper.ValidateParamsExist(commandParams, "amount");
             
             decimal amount = (decimal)commandParams["amount"];
-            var balance = TransactionHelper.GetUserBalance(userid);
+            var balance = TransactionHelper.GetUserPendingBalance(userid);
 
             if (balance == null)
             {

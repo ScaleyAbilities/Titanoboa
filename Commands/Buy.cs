@@ -24,7 +24,7 @@ namespace Titanoboa
             var stockSymbol = commandParams["stockSymbol"].ToString();
 
             // Get users current balance
-            var balance = TransactionHelper.GetUserBalance(userid);
+            var balance = TransactionHelper.GetUserPendingBalance(userid);
             
             // Check if user exists
             if (balance == null)
