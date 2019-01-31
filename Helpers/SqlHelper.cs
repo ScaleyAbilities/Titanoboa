@@ -11,12 +11,12 @@ namespace Titanoboa
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
         private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";  
         public static void openSqlConnection() {
-            Program.connection = new MySqlConnection(connectionString);
+            Program.Connection = new MySqlConnection(connectionString);
             try
             {
                 // Open Connection
                 Console.WriteLine("Connecting to Daboia...");
-                Program.connection.Open();   
+                Program.Connection.Open();   
             }
             catch (Exception e)
             {
@@ -26,14 +26,14 @@ namespace Titanoboa
         }
 
         public static bool closeSqlConnection() {
-            Program.connection.Close();
+            Program.Connection.Close();
             Console.WriteLine("Done.");
             return true;
         }
         
          public static MySqlCommand CreateSqlCommand() {
             MySqlCommand command = new MySqlCommand();
-            command.Connection = Program.connection;
+            command.Connection = Program.Connection;
             return command;
         }
     }
