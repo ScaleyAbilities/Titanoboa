@@ -8,40 +8,41 @@ namespace Titanoboa
 {
     public static partial class Commands
     {
+        /*
+         * - check quote server for current stock price
+         * - check stock data table for amount of stocks the user owns
+         * - calculate if user has enough to sell, stock amount * current price > selling price
+         * - update transaction server
+         */
         public static void Sell(string userid, JObject commandParams)
         {
-            /*
-                - check quote server for current stock price
-                - check stock data table for amount of stocks the user owns
-                - calculate if user has enough to sell, stock amount * current price > selling price
-                - update transaction server
-             */
+            ParamHelper.ValidateParamsExist(commandParams, "amount", "stockSymbol");
 
-             //Unpack JObject
             var sellAmount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stockSymbol"].ToString();
 
-            // Get current stock price -- Not implemented
-            var stockPrice = (decimal)TransactionHelper.GetStockPrice(stockSymbol);
+            // Get current stock price
+            var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);
 
-            // Get amount of stocks user owns. -- Not implemented
+            // Get amount of stocks user owns.
             var stockAmount = TransactionHelper.GetStocks(userid, stockSymbol);
 
             // Check that user has enough stocks to sell.
-            if(sellAmount > stockAmount*stockPrice)
+            if (sellAmount > stockAmount * stockPrice)
             {
-                Console.WriteLine("Insufficient stocks ({0}) at selling price ({1}), current stock price: {2}", stockAmount.ToString(), sellAmount.ToString(), stockPrice.ToString());
-                throw new System.InvalidOperationException("Insufficient stocks");
-                exit;
+                throw new InvalidOperationException(
+                    $"Insufficient stocks ({stockAmount}) at selling price ({sellAmount}), current stock price: {stockPrice}"
+                );
             }
-            else
-            {
-                // Set POSITIVE balance change
-                var balanceChange = stockAmount*stockPrice*1;
-                // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
-                stockAmount = -stockAmount;
-                TransactionHelper.AddTransaction(userid, (decimal)balance, stockSymbol, "SELL", balanceChange, stockAmount, true);
-            }
+
+            // Set balance change
+            var balanceChange = stockAmount * stockPrice;
+
+            // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
+            stockAmount = -stockAmount;
+
+            // TODO: 0 is temporary, we should remove balance from transactions
+            TransactionHelper.AddTransaction(userid, 0, stockSymbol, "SELL", balanceChange, stockAmount, true);
         } 
     }
 }

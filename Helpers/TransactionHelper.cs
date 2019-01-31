@@ -39,14 +39,14 @@ namespace Titanoboa
             throw new NotImplementedException();
         }
 
-        public static int? GetStocks(string userid, string stockSymbol)
+        public static int GetStocks(string userid, string stockSymbol)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.CommandText = "SELECT amount FROM stocks WHERE stocksymbol = @'stockSymbol' AND userid = @'userid'";
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", userid);
-            return (int?)command.ExecuteScalar();
+            return (int?)command.ExecuteScalar() ?? 0;
         }
 
         public static decimal? GetUserBalance(string userid) 
