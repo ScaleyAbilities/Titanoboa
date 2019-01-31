@@ -15,36 +15,33 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks)
             3- Insert buy into transactions table, *set pending flag to true*
          */
-        public static void Buy(string userid, JObject commandParams) 
+        public static void Buy(string username, JObject commandParams) 
         {
-            //Unpack JObject
+            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+
+            // Unpack JObject
             var amount = (decimal)commandParams["amount"];
-            var stockSymbol = commandParams["stockSymbol"].ToString();
+            var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var balance = TransactionHelper.GetUserBalance(userid);
+            var user = TransactionHelper.GetUser(username, true);
             
-            //Check if user exists
-            if(balance == null)
+            if (user.PendingBalance < amount)
             {
-                throw new System.InvalidOperationException("User does not exist.");
-            } 
-            else if((decimal)balance < amount)
-            {
-                throw new System.InvalidOperationException("Insufficient funds.");
+                throw new InvalidOperationException("Insufficient funds.");
             }
 
-            // Get current stock price -- TO DO in helper
-            var stockPrice = (decimal)TransactionHelper.GetStockPrice(stockSymbol);
-            if(amount < stockPrice)
+            // Get current stock price
+            var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);
+            if (amount < stockPrice)
             {
-                throw new System.InvalidOperationException("Not enough money for stock purchase.");
+                throw new InvalidOperationException("Not enough money for stock purchase.");
             }
 
-            var stockAmount = (int)Math.Floor(amount/stockPrice);
-            var balanceChange = stockAmount*stockPrice*-1;
+            var stockAmount = (int)(amount / stockPrice);
+            var balanceChange = stockAmount * stockPrice * -1;
 
-            TransactionHelper.AddTransaction(userid, (decimal)balance, stockSymbol, "BUY", balanceChange, stockAmount, true);
+            TransactionHelper.AddTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, true);
         } 
     }
 }
