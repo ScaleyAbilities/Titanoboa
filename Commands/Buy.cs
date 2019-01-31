@@ -24,9 +24,9 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var user = TransactionHelper.GetUser(username);
+            var user = TransactionHelper.GetUser(username, true);
             
-            if (user.Balance < amount)
+            if (user.PendingBalance < amount)
             {
                 throw new InvalidOperationException("Insufficient funds.");
             }
