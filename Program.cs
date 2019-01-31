@@ -8,7 +8,7 @@ namespace Titanoboa
 {
     class Program
     {
-        internal static MySqlConnection Connection;
+        internal static MySqlConnection connection;
 
         static void RunCommands(JObject json)
         {
@@ -39,6 +39,7 @@ namespace Titanoboa
                     case "QUOTE":
                         break;
                     case "COMMIT_BUY":
+                        Commands.CommitBuy(username);
                         break;
                     case "CANCEL_BUY":
                         break;
