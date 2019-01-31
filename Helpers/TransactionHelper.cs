@@ -126,6 +126,18 @@ namespace Titanoboa
             return transaction;
         }
 
+        public static void CommitTransaction(Transaction transaction)
+        {
+            var command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"UPDATE transactions SET pendingflag = 0, transactiontime = @curTime
+                                    WHERE id = @id";
+            command.Parameters.AddWithValue("@id", transaction.Id);
+            command.Parameters.AddWithValue("@curTime", DateTime.Now);
+            command.Prepare();
+            command.ExecuteNonQuery();
+        }
+
         internal static decimal GetStockPrice(string stockSymbol)
         {
             // TODO: this
@@ -139,7 +151,35 @@ namespace Titanoboa
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
-            return (int?)command.ExecuteScalar() ?? 0;
+
+            var stocks = (int?)command.ExecuteScalar();
+
+            if (stocks == null)
+            {
+                // User stocks entry doesn't exist, create with 0 stocks
+                var createCommand = SqlHelper.CreateSqlCommand();
+                createCommand.CommandText = @"INSERT INTO stocks (userid, stocksymbol, amount)
+                                              VALUES (@userid, @stockSymbol, 0)";
+                createCommand.Parameters.AddWithValue("@userid", user.Id);
+                createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+                createCommand.Prepare();
+                createCommand.ExecuteNonQuery();
+            }
+
+            // If it was null, then we created it and made it 0, so return 0 if null
+            return stocks ?? 0;
+        }
+
+        public static void UpdateStocks(User user, string stockSymbol, int newAmount)
+        {
+            var command = SqlHelper.CreateSqlCommand();
+            command.CommandText = @"UPDATE stocks SET amount = @newAmount
+                                    WHERE userid = @userid AND stocksymbol = @stockSymbol";
+            command.Parameters.AddWithValue("@userid", user.Id);
+            command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+            command.Parameters.AddWithValue("@newAmount", newAmount);
+            command.Prepare();
+            command.ExecuteNonQuery();
         }
 
         public static void DeleteTransaction(Transaction transaction) {
