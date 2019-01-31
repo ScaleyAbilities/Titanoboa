@@ -141,5 +141,13 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@userid", user.Id);
             return (int?)command.ExecuteScalar() ?? 0;
         }
+
+        public static void DeleteTransaction(Transaction transaction) {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            command.CommandText = @"DELETE FROM transactions WHERE transactions.id = @transactionId";
+            command.Prepare();
+            command.Parameters.AddWithValue("@transactionId", transaction.Id);
+            command.ExecuteNonQuery();
+        }
     }
 }

@@ -8,7 +8,7 @@ namespace Titanoboa
 {
     class Program
     {
-        internal static MySqlConnection connection;
+        internal static MySqlConnection Connection;
 
         static void RunCommands(JObject json)
         {
