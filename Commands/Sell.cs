@@ -14,7 +14,7 @@ namespace Titanoboa
          * - calculate if user has enough to sell, stock amount * current price > selling price
          * - update transaction server
          */
-        public static void Sell(string userid, JObject commandParams)
+        public static void Sell(string username, JObject commandParams)
         {
             ParamHelper.ValidateParamsExist(commandParams, "amount", "stockSymbol");
 
@@ -24,8 +24,9 @@ namespace Titanoboa
             // Get current stock price
             var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);
 
-            // Get amount of stocks user owns.
-            var stockAmount = TransactionHelper.GetStocks(userid, stockSymbol);
+            // Get amount of stocks user owns
+            var user = TransactionHelper.GetUser(username);
+            var stockAmount = TransactionHelper.GetStocks(user, stockSymbol);
 
             // Check that user has enough stocks to sell.
             if (sellAmount > stockAmount * stockPrice)
@@ -41,8 +42,7 @@ namespace Titanoboa
             // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
             stockAmount = -stockAmount;
 
-            // TODO: 0 is temporary, we should remove balance from transactions
-            TransactionHelper.AddTransaction(userid, 0, stockSymbol, "SELL", balanceChange, stockAmount, true);
+            TransactionHelper.AddTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, true);
         } 
     }
 }
