@@ -21,15 +21,17 @@ namespace Titanoboa
                 throw new InvalidOperationException("No pending BUY transactions to commit.");
             }
 
-            var newBalance = user.Balance - transaction.BalanceChange;
+            var newBalance = user.Balance - Math.Abs(transaction.BalanceChange);
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
             var stockName = transaction.StockSymbol;
             var stockAmount = transaction.StockAmount;
 
-            TransactionHelper.UpdateStock(ref user, stockName, stockAmount);
-            TransactionHelper.CommitTransaction(transaction);
+            var userStockAmount = TransactionHelper.GetStocks(user, stockName);
+            var newStockAmount = stockAmount + userStockAmount;
 
+            TransactionHelper.UpdateStocks(user, stockName, userStockAmount);
+            TransactionHelper.CommitTransaction(transaction);
         }
     }
 }
