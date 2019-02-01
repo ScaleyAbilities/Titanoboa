@@ -17,16 +17,39 @@ namespace Titanoboa
          */
         public static void SetSellTrigger(string username, JObject commandParams) 
         {
-            ParamHelper.ValidateParamsExist(commandParams, "stockPrice", "stock");
+            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
             // Unpack JObject
-            var sellPrice = (decimal)commandParams["stockPrice"];
+            var sellPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
 
-            TransactionHelper.UpdateTriggerTransaction(user, stockSymbol, "SELLTRIGGER", sellPrice);
+            // Get the existing trigger to find amount in $$ the user wants to sell of their stock
+            var existingTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (existingTrigger == null)
+            {
+                throw new InvalidOperationException("No existing trigger");
+            }
+
+            var sellAmount = existingTrigger.BalanceChange;
+
+            // Check if they have enough to sell
+            var userStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
+            var numStockToSell = (int)Math.Floor(sellAmount / sellPrice);
+            if (userStockAmount < numStockToSell)
+            {
+                throw new InvalidOperationException("Insufficient stock for SET_SELL_TRIGGER, need to choose a higher price point.");
+            }
+
+            // Subtract stocks from user account
+            // any extra $$ will be refunded upon trigger point being hit / cancel trigger events
+            var newUserStockAmount = userStockAmount - numStockToSell;
+            TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
+
+            TransactionHelper.SetTransactionStockPrice(ref existingTrigger, sellPrice);
+            LogHelper.LogCommand(existingTrigger);
         } 
     }
 }

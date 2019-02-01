@@ -153,23 +153,6 @@ namespace Titanoboa
             return transaction;
         }
 
-        public static void UpdateTriggerTransaction(User user, string stockSymbol, string commandText, decimal stockPrice)
-        {
-            MySqlCommand command = SqlHelper.CreateSqlCommand();
-
-            command.CommandText = @"UPDATE transactions SET stockPrice = @stockPrice WHERE transactions.userid = @userid
-                                    AND transactions.command = @commandText
-                                    AND transactions.stocksymbol = @stockSymbol
-                                    AND transactions.type = 'trigger'
-                                    LIMIT 1";
-            
-            command.Parameters.AddWithValue("@userid", user.Id);
-            command.Parameters.AddWithValue("@commandText", commandText);
-            command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
-            command.Prepare();
-            command.ExecuteNonQuery();
-        }
-
         public static bool IsAdmin(string userid)
         {
             // This is unused and won't work right now cuause we don't have admin info in the db
@@ -191,13 +174,75 @@ namespace Titanoboa
             command.ExecuteNonQuery();
         }
 
-        internal static decimal GetStockPrice(User user, string stockSymbol)
+        internal static Transaction GetStockPrice(User user, string stockSymbol)
         {
-            // TODO: this
+            // TODO: Implement actual quote server
             var price = 1.00m;
-            var transaction = CreateTransaction(user, stockSymbol, "QUOTE", price, null, false);
+            var transaction = CreateTransaction(user, stockSymbol, "QUOTE", 0.00m, 1, price);
             LogHelper.LogQuoteServer(transaction, DateTime.Now, "i'm a crypto key woohoo");
-            return price;
+            return transaction;
+        }
+
+        public static Transaction GetTriggerTransaction(User user, string stockSymbol, string triggerType)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            
+            command.CommandText = @"SELECT id, balancechange FROM transactions WHERE transactions.userid = @userid
+                                    AND transactions.command = @commandText
+                                    AND transactions.type = @transactionType
+                                    LIMIT 1";
+            
+            command.Prepare();
+            command.Parameters.AddWithValue("@userid", user.Id);
+            command.Parameters.AddWithValue("@commandText", triggerType);      
+            command.Parameters.AddWithValue("@transactiontype", "trigger");
+
+            Transaction transaction = null;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    reader.Read();
+                    transaction = new Transaction() {
+                        Id = (int)reader["id"],
+                        BalanceChange = (decimal)reader["balancechange"],
+                        StockAmount = (int)reader["stockamount"],
+                    };
+                }
+            }
+
+            return transaction;
+        }
+
+        public static void SetTransactionBalanceChange(ref Transaction transaction, decimal balanceChange)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"UPDATE transactions SET
+                                    transactions.balancechange = @balanceChange
+                                    WHERE transactions.id = @id";
+
+            command.Parameters.AddWithValue("@balanceChange", balanceChange);
+            command.Parameters.AddWithValue("@id", transaction.Id);
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            transaction.BalanceChange = balanceChange;
+        }
+
+        public static void SetTransactionStockPrice(ref Transaction transaction, decimal stockPrice)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"UPDATE transactions SET stockPrice = @stockPrice 
+                                    WHERE transactions.id = @id";
+            
+            command.Parameters.AddWithValue("@stockPrice", stockPrice);
+            command.Parameters.AddWithValue("@id", transaction.Id);
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            transaction.StockPrice = stockPrice;
         }
 
         public static int GetStocks(User user, string stockSymbol, bool includePending = false)
@@ -212,8 +257,8 @@ namespace Titanoboa
                 command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
                                         FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
-                                        AND transactions.command = ""SELL""
-                                        AND transactions.type = ""pending""
+                                        AND transactions.command = 'SELL'
+                                        AND transactions.type = 'pending'
                                         AND transactions.stocksymbol = @stockSymbol
                                         WHERE users.username = @username";
             }
@@ -251,9 +296,9 @@ namespace Titanoboa
             command.ExecuteNonQuery();
         }
 
-        public static void DeleteTransaction(Transaction transaction) {
+        public static void CancelTransaction(Transaction transaction) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
-            command.CommandText = @"DELETE FROM transactions WHERE transactions.id = @transactionId";
+            command.CommandText = @"UPDATE transactions SET type = 'canceled' WHERE transactions.id = @transactionId";
             command.Prepare();
             command.Parameters.AddWithValue("@transactionId", transaction.Id);
             command.ExecuteNonQuery();

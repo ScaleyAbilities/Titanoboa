@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
@@ -9,12 +10,15 @@ namespace Titanoboa
             1- Hit quote server for most up-to-date price
             2- Log event in Logs table
          */
-        public static decimal Quote(string stockSymbol) 
+        public static void Quote(string username, JObject commandParams) 
         {
-            decimal price = TransactionHelper.GetStockPrice(stockSymbol);
-            // TO DO -- fix parameters
-            LogHelper.LogQuoteSever("srv", 0, price, stockSymbol, 0, DateTime.Now);
-            return price;
+            ParamHelper.ValidateParamsExist(commandParams, "stock");
+            
+            var stockSymbol = (string)commandParams["stock"];
+            var user = TransactionHelper.GetUser(username);
+            var quoteTransaction = TransactionHelper.GetStockPrice(user, stockSymbol);
+            
+            LogHelper.LogCommand(quoteTransaction);
         }
     }
 }

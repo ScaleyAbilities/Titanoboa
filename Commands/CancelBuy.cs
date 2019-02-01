@@ -13,7 +13,8 @@ namespace Titanoboa
         {
             var user = TransactionHelper.GetUser(username, false);
             var transaction = TransactionHelper.GetLatestPendingTransaction(user, "BUY");
-            TransactionHelper.DeleteTransaction(transaction);
+            TransactionHelper.CancelTransaction(transaction);
+            LogHelper.LogCommand(transaction);
         }
     }
 }

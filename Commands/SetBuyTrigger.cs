@@ -17,16 +17,22 @@ namespace Titanoboa
          */
         public static void SetBuyTrigger(string username, JObject commandParams) 
         {
-            ParamHelper.ValidateParamsExist(commandParams, "stockPrice", "stock");
+            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
             // Unpack JObject
-            var buyPrice = (decimal)commandParams["stockPrice"];
+            var buyPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
+            var buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (buyTrigger == null)
+            {
+                throw new InvalidOperationException("No existing trigger");
+            }
 
-            TransactionHelper.UpdateTriggerTransaction(user, stockSymbol, "BUYTRIGGER", buyPrice);
+            TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
+            LogHelper.LogCommand(buyTrigger);
         } 
     }
 }

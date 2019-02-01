@@ -25,13 +25,14 @@ namespace Titanoboa
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
             var stockName = transaction.StockSymbol;
-            var stockAmount = transaction.StockAmount;
+            var stockAmount = transaction.StockAmount ?? 0;
    
             var userStockAmount = TransactionHelper.GetStocks(user, stockName);
             var newStockAmount = userStockAmount - stockAmount;
 
             TransactionHelper.UpdateStocks(user, stockName, newStockAmount);
             TransactionHelper.CommitTransaction(transaction);
+            LogHelper.LogCommand(transaction);
         }
     }
 }

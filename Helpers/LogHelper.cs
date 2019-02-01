@@ -4,6 +4,13 @@ namespace Titanoboa
 {
     public static class LogHelper
     {
+        public enum EventType
+        {
+            System,
+            Error,
+            Debug
+        }
+
         public static void LogCommand(Transaction transaction, string filename = null)
         {
             var sqlCommand = SqlHelper.CreateSqlCommand();
@@ -16,7 +23,6 @@ namespace Titanoboa
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
 
-            // Log the transaction as well
             LogTransaction(transaction);
         }
 
@@ -33,15 +39,7 @@ namespace Titanoboa
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
 
-            // Log the transaction as well
             LogTransaction(transaction);
-        }
-
-        public enum EventType
-        {
-            System,
-            Error,
-            Debug
         }
 
         public static void LogEvent(EventType type, Transaction transaction, string message, string filename = null)
@@ -58,12 +56,14 @@ namespace Titanoboa
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
 
-            // Log the transaction as well
             LogTransaction(transaction);
         }
 
         private static void LogTransaction(Transaction transaction)
         {
+            if (transaction.HasBeenLogged)
+                return;
+
             var sqlCommand = SqlHelper.CreateSqlCommand();
             sqlCommand.CommandText = @"INSERT INTO logs (logtype, timestamp, server, transactionid)
                                        VALUES ('transaction', @curTime, @server, @transactionId)";
@@ -72,6 +72,8 @@ namespace Titanoboa
             sqlCommand.Parameters.AddWithValue("@transactionId", transaction.Id);
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
+
+            transaction.HasBeenLogged = true;
         }
     }
 }
