@@ -205,7 +205,8 @@ namespace Titanoboa
                     reader.Read();
                     transaction = new Transaction() {
                         Id = (int)reader["id"],
-                        BalanceChange = (decimal)reader["balancechange"]
+                        BalanceChange = (decimal)reader["balancechange"],
+                        StockAmount = (int)reader["stockamount"],
                     };
                 }
             }
