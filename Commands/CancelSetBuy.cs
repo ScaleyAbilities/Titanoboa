@@ -14,7 +14,7 @@ namespace Titanoboa
             var user = TransactionHelper.GetUser(username);
 
             // Get trigger to cancel
-            var existingSetBuyTrigger = TransactionHelper.GetTrigger(user, stockSymbol, "BUY_TRIGGER");
+            var existingSetBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             var refund = existingSetBuyTrigger.BalanceChange;
 
             // Refund user
@@ -23,6 +23,8 @@ namespace Titanoboa
 
             // Cancel transaction
             TransactionHelper.CancelTransaction(existingSetBuyTrigger);
+
+            LogHelper.LogCommand(existingSetBuyTrigger);
         }
         
     }

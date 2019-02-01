@@ -31,6 +31,7 @@ namespace Titanoboa
 
             TransactionHelper.UpdateStocks(user, stockName, userStockAmount);
             TransactionHelper.CommitTransaction(transaction);
+            LogHelper.LogCommand(transaction);
         }
     }
 }

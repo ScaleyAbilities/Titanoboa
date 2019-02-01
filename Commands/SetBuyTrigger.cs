@@ -25,8 +25,14 @@ namespace Titanoboa
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
+            var buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (buyTrigger == null)
+            {
+                throw new InvalidOperationException("No existing trigger");
+            }
 
-            TransactionHelper.UpdateTriggerTransaction(user, stockSymbol, "BUY_TRIGGER", buyPrice);
+            TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
+            LogHelper.LogCommand(buyTrigger);
         } 
     }
 }

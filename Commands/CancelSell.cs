@@ -11,7 +11,8 @@ namespace Titanoboa
          {
             var user = TransactionHelper.GetUser(username, false);
             var transaction = TransactionHelper.GetLatestPendingTransaction(user, "SELL");
-            TransactionHelper.DeleteTransaction(transaction);
+            TransactionHelper.CancelTransaction(transaction);
+            LogHelper.LogCommand(transaction);
          }
         
     }

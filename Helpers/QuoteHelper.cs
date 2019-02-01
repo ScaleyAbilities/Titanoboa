@@ -13,7 +13,7 @@ namespace Titanoboa
 
         private static Socket skt;
 
-        public static bool Connect(){
+        public static bool Connect() {
             // Got the follow lines of code from microsoft .Net documentation. Might not be best?
             // https://docs.microsoft.com/en-us/dotnet/framework/network-programming/synchronous-client-socket-example
             try

@@ -16,17 +16,18 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
             
             // Check if existing trigger exists
-            Transaction existingSellTrigger = TransactionHelper.GetTrigger(user, stockSymbol, "SELL_TRIGGER");
-            if (existingSellTrigger != null)
+            Transaction sellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (sellTrigger != null)
             {
-                var newAmount = existingSellTrigger.BalanceChange + amount;
-                TransactionHelper.SetTransactionBalanceChange(ref existingSellTrigger, newAmount);
+                var newAmount = sellTrigger.BalanceChange + amount;
+                TransactionHelper.SetTransactionBalanceChange(ref sellTrigger, newAmount);
             }
             else
             {
-                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
+                sellTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
             }
             
+            LogHelper.LogCommand(sellTrigger);
         }
     }
 }

@@ -23,7 +23,8 @@ namespace Titanoboa
             var user = TransactionHelper.GetUser(username);
 
             // Get current stock price
-            var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);
+            var stockPriceTransaction = TransactionHelper.GetStockPrice(user, stockSymbol);
+            var stockPrice = stockPriceTransaction.StockPrice ?? 0;
 
             // Get amount of stocks user owns
             var pendingStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
@@ -44,7 +45,8 @@ namespace Titanoboa
             // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
             stockAmount = -stockAmount;
 
-            TransactionHelper.CreateTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, stockPrice, "pending");
+            var transaction = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, stockPrice, "pending");
+            LogHelper.LogCommand(transaction);
         } 
     }
 }

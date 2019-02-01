@@ -38,6 +38,7 @@ namespace Titanoboa
                         Commands.Buy(username, commandParams);
                         break;
                     case "QUOTE":
+                        Commands.Quote(username, commandParams);
                         break;
                     case "COMMIT_BUY":
                         Commands.CommitBuy(username);

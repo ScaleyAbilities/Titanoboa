@@ -10,7 +10,6 @@ namespace Titanoboa
             // Sanity check
             ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
 
-
             // Get params
             var user = TransactionHelper.GetUser(username, true);
             var amount = (decimal)commandParams["amount"];
@@ -27,16 +26,18 @@ namespace Titanoboa
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
             // Check if existing trigger exists
-            Transaction existingBuyTrigger = TransactionHelper.GetTrigger(user, stockSymbol, "BUY_TRIGGER");
-            if (existingBuyTrigger != null)
+            Transaction buyTrigger = TransactionHelper.GetTrigger(user, stockSymbol, "BUY_TRIGGER");
+            if (buyTrigger != null)
             {
-                var newAmount = existingBuyTrigger.BalanceChange + amount;
-                TransactionHelper.SetTransactionBalanceChange(ref existingBuyTrigger, newAmount);
+                var newAmount = buyTrigger.BalanceChange + amount;
+                TransactionHelper.SetTransactionBalanceChange(ref buyTrigger, newAmount);
             }
             else
             {
-                TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
+                buyTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
             }
+
+            LogHelper.LogCommand(buyTrigger);
         }
     }
 }

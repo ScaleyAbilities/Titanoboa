@@ -32,7 +32,9 @@ namespace Titanoboa
             }
 
             // Get current stock price
-            var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);
+            var stockPriceTransaction = TransactionHelper.GetStockPrice(user, stockSymbol);
+            var stockPrice = stockPriceTransaction.StockPrice ?? 0;
+
             if (amount < stockPrice)
             {
                 throw new InvalidOperationException("Not enough money for single stock purchase.");
