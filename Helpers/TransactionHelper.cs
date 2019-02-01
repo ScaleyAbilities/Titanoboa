@@ -76,12 +76,13 @@ namespace Titanoboa
             user.Balance = balance;
         }
 
-        public static void AddTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
+        public static Transaction CreateTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
             command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag, transactiontime) 
-                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending, @curTime)";
+                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending, @curTime);
+                                    SELECT LAST_INSERT_ID();";
             command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@stocksymbol", stockSymbol);
             command.Parameters.AddWithValue("@command", commandText);
@@ -89,7 +90,14 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@stockamount", stockAmount);
             command.Parameters.AddWithValue("@pending", pending);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
-            command.ExecuteNonQuery();
+            var id = (int)command.ExecuteScalar();
+
+            return new Transaction() {
+                Id = id,
+                BalanceChange = balanceChange,
+                StockSymbol = stockSymbol,
+                StockAmount = stockAmount
+            };
         }
 
         // Method to output json object of all transactions or tansactions for single user.
