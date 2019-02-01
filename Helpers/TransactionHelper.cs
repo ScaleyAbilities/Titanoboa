@@ -195,7 +195,7 @@ namespace Titanoboa
         {
             // TODO: this
             var price = 1.00m;
-            var transaction = CreateTransaction(user, stockSymbol, "QUOTE", price, null, false);
+            var transaction = CreateTransaction(user, stockSymbol, "QUOTE", 0.00m, 1, price);
             LogHelper.LogQuoteServer(transaction, DateTime.Now, "i'm a crypto key woohoo");
             return price;
         }
@@ -230,18 +230,20 @@ namespace Titanoboa
             return transaction;
         }
 
-        public static void UpdateTransaction(ref Transaction transaction)
+        public static void SetTransactionBalanceChange(ref Transaction transaction, decimal balanceChange)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
-            
-            command.CommandText = @"UPDATE transactions set
-                                        transactions.balancechange = @balanceChange
-                                        WHERE transactions.id = @id";
+
+            command.CommandText = @"UPDATE transactions SET
+                                    transactions.balancechange = @balanceChange
+                                    WHERE transactions.id = @id";
 
             command.Prepare();
-            command.Parameters.AddWithValue("@balanceChange", transaction.BalanceChange);
+            command.Parameters.AddWithValue("@balanceChange", balanceChange);
             command.Parameters.AddWithValue("@id", transaction.Id);
             command.ExecuteNonQuery();
+
+            transaction.BalanceChange = balanceChange;
         }
 
         public static int GetStocks(User user, string stockSymbol, bool includePending = false)

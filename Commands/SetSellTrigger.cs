@@ -15,7 +15,7 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
             3- Update spending balance, and number of stocks in transactions table
          */
-        public static void SetBuyTrigger(string username, JObject commandParams) 
+        public static void SetSellTrigger(string username, JObject commandParams) 
         {
             ParamHelper.ValidateParamsExist(commandParams, "stockPrice", "stock");
 
@@ -26,7 +26,7 @@ namespace Titanoboa
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
 
-            TransactionHelper.UpdateTriggerTransaction(user, stockSymbol, "SELLTRIGGER", sellPrice);
+            TransactionHelper.UpdateTriggerTransaction(user, stockSymbol, "SELL_TRIGGER", sellPrice);
         } 
     }
 }

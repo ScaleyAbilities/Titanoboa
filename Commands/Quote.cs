@@ -11,10 +11,13 @@ namespace Titanoboa
          */
         public static decimal Quote(string stockSymbol) 
         {
-            decimal price = TransactionHelper.GetStockPrice(stockSymbol);
+            // TODO: fix this
+            return 1.00m;
+
+            //decimal price = TransactionHelper.GetStockPrice(stockSymbol);
             // TO DO -- fix parameters
-            LogHelper.LogQuoteSever("srv", 0, price, stockSymbol, 0, DateTime.Now);
-            return price;
+            //LogHelper.LogQuoteSever("srv", 0, price, stockSymbol, 0, DateTime.Now);
+            //return price;
         }
     }
 }
