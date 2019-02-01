@@ -3,12 +3,12 @@ using Xunit;
 
 namespace Tests
 {
-    public class UnitTest
+    public class Add
     {
         [Fact]
-        public void Add()
+        public void AddTest()
         {
-            
+            Assert.False(true, "testing the tests");
         }
     }
 }
