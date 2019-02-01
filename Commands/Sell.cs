@@ -44,7 +44,7 @@ namespace Titanoboa
             // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
             stockAmount = -stockAmount;
 
-            TransactionHelper.AddTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, true);
+            TransactionHelper.AddTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, "pending");
         } 
     }
 }
