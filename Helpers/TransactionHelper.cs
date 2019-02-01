@@ -200,7 +200,7 @@ namespace Titanoboa
             return price;
         }
 
-        public static Transaction GetTrigger(User user, string stockSymbol)
+        public static Transaction GetTrigger(User user, string stockSymbol, string triggerType)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             
@@ -211,7 +211,7 @@ namespace Titanoboa
             
             command.Prepare();
             command.Parameters.AddWithValue("@userid", user.Id);
-            command.Parameters.AddWithValue("@commandText", "BUY_TRIGGER");      
+            command.Parameters.AddWithValue("@commandText", triggerType);      
             command.Parameters.AddWithValue("@transactiontype", "trigger");
 
             Transaction transaction = null;
