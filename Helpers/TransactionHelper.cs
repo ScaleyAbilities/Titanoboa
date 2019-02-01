@@ -76,12 +76,19 @@ namespace Titanoboa
             user.Balance = balance;
         }
 
-        public static Transaction CreateTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
-        {
+        public static Transaction CreateTransaction(
+            User user, 
+            string stockSymbol, 
+            string commandText, 
+            decimal balanceChange = 0.00m,
+            int? stockAmount = null, 
+            decimal? stockPrice = null, 
+            string type = "completed"
+        ) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
-            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag, transactiontime) 
-                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending, @curTime);
+            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, stockprice, type, transactiontime) 
+                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @stockprice, @type, @curTime);
                                     SELECT LAST_INSERT_ID();";
 
             command.Parameters.AddWithValue("@userid", user.Id);
@@ -89,6 +96,7 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@command", commandText);
             command.Parameters.AddWithValue("@balancechange", balanceChange);
             command.Parameters.AddWithValue("@stockamount", stockAmount);
+            command.Parameters.AddWithValue("@stockprice", stockPrice);
             command.Parameters.AddWithValue("@type", type);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
             var id = (int)command.ExecuteScalar();
@@ -117,7 +125,7 @@ namespace Titanoboa
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
             command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
-                                    AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                    AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
                                     AND transactions.command = @commandText
                                     AND transactions.type = 'pending'
                                     ORDER BY transactions.transactiontime DESC
@@ -125,7 +133,6 @@ namespace Titanoboa
             
             command.Prepare();
             command.Parameters.AddWithValue("@userid", user.Id);
-            command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.Parameters.AddWithValue("@commandText", commandText);
 
             Transaction transaction = null;
@@ -178,18 +185,19 @@ namespace Titanoboa
         {
             var command = SqlHelper.CreateSqlCommand();
 
-            command.CommandText = @"UPDATE transactions SET type = 0, transactiontime = @curTime
-                                    WHERE id = @id";
+            command.CommandText = @"UPDATE transactions SET type = 'completed' WHERE id = @id";
             command.Parameters.AddWithValue("@id", transaction.Id);
-            command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.Prepare();
             command.ExecuteNonQuery();
         }
 
-        internal static decimal GetStockPrice(string stockSymbol)
+        internal static decimal GetStockPrice(User user, string stockSymbol)
         {
             // TODO: this
-            return 1;
+            var price = 1.00m;
+            var transaction = CreateTransaction(user, stockSymbol, "QUOTE", price, null, false);
+            LogHelper.LogQuoteServer(transaction, DateTime.Now, "i'm a crypto key woohoo");
+            return price;
         }
 
         public static int GetStocks(User user, string stockSymbol, bool includePending = false)

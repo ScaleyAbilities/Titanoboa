@@ -15,6 +15,9 @@ namespace Titanoboa
             sqlCommand.Parameters.AddWithValue("@filename", filename);
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
+
+            // Log the transaction as well
+            LogTransaction(transaction);
         }
 
         public static void LogQuoteServer(Transaction transaction, DateTime quoteServerTime, string cryptoKey)
@@ -29,18 +32,16 @@ namespace Titanoboa
             sqlCommand.Parameters.AddWithValue("@cryptokey", cryptoKey);
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
+
+            // Log the transaction as well
+            LogTransaction(transaction);
         }
 
-        public static void LogTransaction(Transaction transaction)
+        public enum EventType
         {
-            var sqlCommand = SqlHelper.CreateSqlCommand();
-            sqlCommand.CommandText = @"INSERT INTO logs (logtype, timestamp, server, transactionid)
-                                       VALUES ('transaction', @curTime, @server, @transactionId)";
-            sqlCommand.Parameters.AddWithValue("@curTime", DateTime.Now);
-            sqlCommand.Parameters.AddWithValue("@server", Program.ServerName);
-            sqlCommand.Parameters.AddWithValue("@transactionId", transaction.Id);
-            sqlCommand.Prepare();
-            sqlCommand.ExecuteNonQuery();
+            System,
+            Error,
+            Debug
         }
 
         public static void LogEvent(EventType type, Transaction transaction, string message, string filename = null)
@@ -56,13 +57,21 @@ namespace Titanoboa
             sqlCommand.Parameters.AddWithValue("@filename", filename);
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();
+
+            // Log the transaction as well
+            LogTransaction(transaction);
         }
 
-        public enum EventType
+        private static void LogTransaction(Transaction transaction)
         {
-            System,
-            Error,
-            Debug
+            var sqlCommand = SqlHelper.CreateSqlCommand();
+            sqlCommand.CommandText = @"INSERT INTO logs (logtype, timestamp, server, transactionid)
+                                       VALUES ('transaction', @curTime, @server, @transactionId)";
+            sqlCommand.Parameters.AddWithValue("@curTime", DateTime.Now);
+            sqlCommand.Parameters.AddWithValue("@server", Program.ServerName);
+            sqlCommand.Parameters.AddWithValue("@transactionId", transaction.Id);
+            sqlCommand.Prepare();
+            sqlCommand.ExecuteNonQuery();
         }
     }
 }
