@@ -4,7 +4,7 @@ namespace Titanoboa
 {
     public static class LogHelper
     {
-        public static void LogUserCommand(
+        public static void LogCommand(
             string server,
             int transactionId,
             string command,
