@@ -22,7 +22,7 @@ namespace Titanoboa
                                         FROM users LEFT JOIN transactions ON users.id = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                         AND transactions.command = ""BUY""
-                                        AND transactions.pendingflag = 1
+                                        AND transactions.type = ""pending""
                                         WHERE users.username = @username";
 
                 command.Parameters.AddWithValue("@curTime", DateTime.Now);
@@ -77,18 +77,18 @@ namespace Titanoboa
             user.Balance = balance;
         }
 
-        public static void AddTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
+        public static void AddTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, string type)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
-            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag, transactiontime) 
-                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending, @curTime)";
+            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, type, transactiontime) 
+                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @type, @curTime)";
             command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@stocksymbol", stockSymbol);
             command.Parameters.AddWithValue("@command", commandText);
             command.Parameters.AddWithValue("@balancechange", balanceChange);
             command.Parameters.AddWithValue("@stockamount", stockAmount);
-            command.Parameters.AddWithValue("@pending", pending);
+            command.Parameters.AddWithValue("@type", type);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.ExecuteNonQuery();
         }
@@ -99,7 +99,7 @@ namespace Titanoboa
             command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
                                     AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                     AND transactions.command = @commandText
-                                    AND transactions.pendingflag = 1
+                                    AND transactions.type = pending
                                     ORDER BY transactions.transactiontime DESC
                                     LIMIT 1";
             
@@ -130,7 +130,7 @@ namespace Titanoboa
         {
             var command = SqlHelper.CreateSqlCommand();
 
-            command.CommandText = @"UPDATE transactions SET pendingflag = 0, transactiontime = @curTime
+            command.CommandText = @"UPDATE transactions SET type = 0, transactiontime = @curTime
                                     WHERE id = @id";
             command.Parameters.AddWithValue("@id", transaction.Id);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
@@ -157,7 +157,7 @@ namespace Titanoboa
                                         FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                         AND transactions.command = ""SELL""
-                                        AND transactions.pendingflag = 1
+                                        AND transactions.type = ""pending""
                                         AND transactions.stocksymbol = @stockSymbol
                                         WHERE users.username = @username";
             }
