@@ -17,9 +17,11 @@ namespace Titanoboa
 
             //Update existing user balance
             decimal newBalance = user.Balance + amount;
+            var transaction = TransactionHelper.CreateTransaction(user, null, "ADD", amount);
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
             Console.WriteLine("Updated user: {0}, balance: {1}", user.Username, user.Balance);
+            LogHelper.LogCommand(transaction);
         } 
 
     }
