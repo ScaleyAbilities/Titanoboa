@@ -35,13 +35,13 @@ namespace Titanoboa
             var stockPrice = TransactionHelper.GetStockPrice(stockSymbol);
             if (amount < stockPrice)
             {
-                throw new InvalidOperationException("Not enough money for stock purchase.");
+                throw new InvalidOperationException("Not enough money for single stock purchase.");
             }
 
             var stockAmount = (int)(amount / stockPrice);
             var balanceChange = stockAmount * stockPrice * -1;
 
-            TransactionHelper.AddTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, true);
+            TransactionHelper.AddTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, "pending");
         } 
     }
 }
