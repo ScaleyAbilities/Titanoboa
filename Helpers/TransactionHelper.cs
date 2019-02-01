@@ -21,7 +21,7 @@ namespace Titanoboa
                                         FROM users LEFT JOIN transactions ON users.id = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                         AND transactions.command = ""BUY""
-                                        AND transactions.pendingflag = 1
+                                        AND transactions.type = ""pending""
                                         WHERE users.username = @username";
 
                 command.Parameters.AddWithValue("@curTime", DateTime.Now);
@@ -83,12 +83,13 @@ namespace Titanoboa
             command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, pendingflag, transactiontime) 
                                     values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @pending, @curTime);
                                     SELECT LAST_INSERT_ID();";
+
             command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@stocksymbol", stockSymbol);
             command.Parameters.AddWithValue("@command", commandText);
             command.Parameters.AddWithValue("@balancechange", balanceChange);
             command.Parameters.AddWithValue("@stockamount", stockAmount);
-            command.Parameters.AddWithValue("@pending", pending);
+            command.Parameters.AddWithValue("@type", type);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
             var id = (int)command.ExecuteScalar();
 
@@ -118,7 +119,7 @@ namespace Titanoboa
             command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
                                     AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                     AND transactions.command = @commandText
-                                    AND transactions.pendingflag = 1
+                                    AND transactions.type = 'pending'
                                     ORDER BY transactions.transactiontime DESC
                                     LIMIT 1";
             
@@ -145,6 +146,22 @@ namespace Titanoboa
             return transaction;
         }
 
+        public static void UpdateTriggerTransaction(User user, string stockSymbol, string commandText, decimal stockPrice)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"UPDATE transactions SET stockPrice = @stockPrice WHERE transactions.userid = @userid
+                                    AND transactions.command = @commandText
+                                    AND transactions.stocksymbol = @stockSymbol
+                                    AND transactions.type = 'trigger'
+                                    LIMIT 1";
+            
+            command.Parameters.AddWithValue("@userid", user.Id);
+            command.Parameters.AddWithValue("@commandText", commandText);
+            command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+            command.Prepare();
+            command.ExecuteNonQuery();
+        }
 
         public static bool IsAdmin(string userid)
         {
@@ -161,7 +178,7 @@ namespace Titanoboa
         {
             var command = SqlHelper.CreateSqlCommand();
 
-            command.CommandText = @"UPDATE transactions SET pendingflag = 0, transactiontime = @curTime
+            command.CommandText = @"UPDATE transactions SET type = 0, transactiontime = @curTime
                                     WHERE id = @id";
             command.Parameters.AddWithValue("@id", transaction.Id);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
@@ -188,7 +205,7 @@ namespace Titanoboa
                                         FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                         AND transactions.command = ""SELL""
-                                        AND transactions.pendingflag = 1
+                                        AND transactions.type = ""pending""
                                         AND transactions.stocksymbol = @stockSymbol
                                         WHERE users.username = @username";
             }
