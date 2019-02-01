@@ -26,7 +26,7 @@ namespace Titanoboa
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
             // Check if existing trigger exists
-            Transaction buyTrigger = TransactionHelper.GetTrigger(user, stockSymbol, "BUY_TRIGGER");
+            Transaction buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (buyTrigger != null)
             {
                 var newAmount = buyTrigger.BalanceChange + amount;
