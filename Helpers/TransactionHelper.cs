@@ -137,6 +137,7 @@ namespace Titanoboa
             return transaction;
         }
 
+
         public static bool IsAdmin(string userid)
         {
             // This is unused and won't work right now cuause we don't have admin info in the db
@@ -148,20 +149,80 @@ namespace Titanoboa
             return (bool)command.ExecuteScalar();
         }
 
+        public static void CommitTransaction(Transaction transaction)
+        {
+            var command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"UPDATE transactions SET pendingflag = 0, transactiontime = @curTime
+                                    WHERE id = @id";
+            command.Parameters.AddWithValue("@id", transaction.Id);
+            command.Parameters.AddWithValue("@curTime", DateTime.Now);
+            command.Prepare();
+        }
+
         internal static decimal GetStockPrice(string stockSymbol)
         {
             // TODO: this
             return 1;
         }
 
-        public static int GetStocks(User user, string stockSymbol)
+        public static int GetStocks(User user, string stockSymbol, bool includePending = false)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
-            command.CommandText = @"SELECT amount FROM stocks WHERE stocksymbol = @stockSymbol AND userid = @userid";
+
+            if(!includePending) {
+                command.CommandText = @"SELECT amount FROM stocks WHERE stocksymbol = @stockSymbol AND userid = @userid";
+            }
+            else
+            {
+                command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
+                                        FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
+                                        AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                        AND transactions.command = ""SELL""
+                                        AND transactions.pendingflag = 1
+                                        AND transactions.stocksymbol = @stockSymbol
+                                        WHERE users.username = @username";
+            }
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
-            return (int?)command.ExecuteScalar() ?? 0;
+
+            var stocks = (int?)command.ExecuteScalar();
+
+            if (stocks == null)
+            {
+                // User stocks entry doesn't exist, create with 0 stocks
+                var createCommand = SqlHelper.CreateSqlCommand();
+                createCommand.CommandText = @"INSERT INTO stocks (userid, stocksymbol, amount)
+                                              VALUES (@userid, @stockSymbol, 0)";
+                createCommand.Parameters.AddWithValue("@userid", user.Id);
+                createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+                createCommand.Prepare();
+                createCommand.ExecuteNonQuery();
+            }
+
+            // If it was null, then we created it and made it 0, so return 0 if null
+            return stocks ?? 0;
+        }
+
+        public static void UpdateStocks(User user, string stockSymbol, int newAmount)
+        {
+            var command = SqlHelper.CreateSqlCommand();
+            command.CommandText = @"UPDATE stocks SET amount = @newAmount
+                                    WHERE userid = @userid AND stocksymbol = @stockSymbol";
+            command.Parameters.AddWithValue("@userid", user.Id);
+            command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+            command.Parameters.AddWithValue("@newAmount", newAmount);
+            command.Prepare();
+            command.ExecuteNonQuery();
+        }
+
+        public static void DeleteTransaction(Transaction transaction) {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            command.CommandText = @"DELETE FROM transactions WHERE transactions.id = @transactionId";
+            command.Prepare();
+            command.Parameters.AddWithValue("@transactionId", transaction.Id);
+            command.ExecuteNonQuery();
         }
     }
 }

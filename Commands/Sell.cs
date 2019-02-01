@@ -26,15 +26,17 @@ namespace Titanoboa
 
             // Get amount of stocks user owns
             var user = TransactionHelper.GetUser(username);
-            var stockAmount = TransactionHelper.GetStocks(user, stockSymbol);
+            var pendingStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
 
             // Check that user has enough stocks to sell.
-            if (sellAmount > stockAmount * stockPrice)
+            if (sellAmount > pendingStockAmount * stockPrice)
             {
                 throw new InvalidOperationException(
-                    $"Insufficient stocks ({stockAmount}) at selling price ({sellAmount}), current stock price: {stockPrice}"
+                    $"Insufficient stocks ({stockSymbol}): ({pendingStockAmount}) at selling price ({sellAmount}), current stock price: {stockPrice}"
                 );
             }
+
+            var stockAmount = (int)Math.Floor(sellAmount / stockPrice);
 
             // Set balance change
             var balanceChange = stockAmount * stockPrice;
