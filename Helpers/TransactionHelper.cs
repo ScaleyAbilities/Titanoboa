@@ -3,7 +3,6 @@ using System.Data;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
-
 namespace Titanoboa
 {
     public static class TransactionHelper
@@ -93,8 +92,19 @@ namespace Titanoboa
             command.ExecuteNonQuery();
         }
 
-        public static Transaction GetLatestPendingTransaction(User user, string commandText)
+        // Method to output json object of all transactions or tansactions for single user.
+        internal static JObject GetAllLogs()
         {
+            throw new NotImplementedException();
+        }
+
+        // Method to output json object of all transactions or tansactions for single user.
+        internal static JObject GetUserLogs(User user)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Transaction GetLatestPendingTransaction(User user, string commandText) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
             command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
@@ -162,6 +172,17 @@ namespace Titanoboa
                     command.ExecuteNonQuery();
                 }
             }
+        }
+
+        public static bool IsAdmin(string userid)
+        {
+            // This is unused and won't work right now cuause we don't have admin info in the db
+
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            command.CommandText = @"SELECT if(isadmin) FROM users WHERE userid = @userid"; 
+            command.Prepare();
+            command.Parameters.AddWithValue("@userid", userid);
+            return (bool)command.ExecuteScalar();
         }
 
         public static void CommitTransaction(Transaction transaction)
