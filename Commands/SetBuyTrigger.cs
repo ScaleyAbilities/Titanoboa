@@ -9,7 +9,7 @@ namespace Titanoboa
     public static partial class Commands
     {
         /*
-            Buy command flow:
+            Set Buy Trigger command flow:
             1- Get current user
             2- Find the stock trigger entry in transaction table
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
