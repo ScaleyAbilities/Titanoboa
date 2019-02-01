@@ -7,13 +7,13 @@ namespace Titanoboa
     public static class QuoteHelper
     {
         // Quote server port number
-        private const int quotePort = "4448";
+        private const int quotePort = 4448;
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
 
         private static Socket skt;
 
-        private bool connectionEstablished(){
+        public static bool connectionEstablished(){
             // Got the follow lines of code from microsoft .Net documentation. Might not be best?
             // https://docs.microsoft.com/en-us/dotnet/framework/network-programming/synchronous-client-socket-example
             try
