@@ -158,6 +158,7 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@id", transaction.Id);
             command.Parameters.AddWithValue("@curTime", DateTime.Now);
             command.Prepare();
+            command.ExecuteNonQuery();
         }
 
         internal static decimal GetStockPrice(string stockSymbol)
