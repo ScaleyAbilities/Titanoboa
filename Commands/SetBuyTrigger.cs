@@ -10,10 +10,10 @@ namespace Titanoboa
     {
         /*
             Buy command flow:
-            1- Get current user balance
-            2- Get current stock price
-            3- Calculate stock amount (only whole stocks)
-            3- Insert buy into transactions table, *set pending flag to true*
+            1- Get current user
+            2- Find the stock trigger entry in transaction table
+            3- Calculate stock amount (only whole stocks, based on user spending and stock price)
+            3- Update spending balance, and number of stocks in transactions table
          */
         public static void SetBuyTrigger(string username, JObject commandParams) 
         {

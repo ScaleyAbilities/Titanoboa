@@ -100,7 +100,7 @@ namespace Titanoboa
             command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
                                     AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
                                     AND transactions.command = @commandText
-                                    AND transactions.type = pending
+                                    AND transactions.type = 'pending'
                                     ORDER BY transactions.transactiontime DESC
                                     LIMIT 1";
             
@@ -131,37 +131,17 @@ namespace Titanoboa
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
-            command.CommandText = @"SELECT id, balancechange FROM transactions WHERE transactions.userid = @userid
+            command.CommandText = @"UPDATE transactions SET stockPrice = @stockPrice WHERE transactions.userid = @userid
                                     AND transactions.command = @commandText
                                     AND transactions.stocksymbol = @stockSymbol
-                                    AND transactions.type = trigger
+                                    AND transactions.type = 'trigger'
                                     LIMIT 1";
             
-            command.Prepare();
             command.Parameters.AddWithValue("@userid", user.Id);
             command.Parameters.AddWithValue("@commandText", commandText);
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
-
-            using (var reader = command.ExecuteReader())
-            {
-                if (reader.HasRows)
-                {
-                    reader.Read();
-                    int id = (int)reader["id"];
-                    decimal balanceChange = ((decimal)reader["balancechange"]);
-                    // How much of the stock user can buy at the rate with the set amount
-                    balanceChange -= balanceChange % stockPrice;
-                    decimal stockAmount = balanceChange / stockPrice;
-
-                    command.CommandText = @"UPDATE transactions SET balancechange = @balanceChange, stockAmount = @stockAmount
-                                            WHERE id = @id";
-                    command.Parameters.AddWithValue("@id", id);
-                    command.Parameters.AddWithValue("@balanceChange", balanceChange);
-                    command.Parameters.AddWithValue("@stockAmount", stockAmount);
-                    command.Prepare();
-                    command.ExecuteNonQuery();
-                }
-            }
+            command.Prepare();
+            command.ExecuteNonQuery();
         }
 
         public static void CommitTransaction(Transaction transaction)
