@@ -59,6 +59,7 @@ namespace Titanoboa
                         Commands.SetBuyTrigger(username, commandParams);
                         break;
                     case "CANCEL_SET_BUY":
+                        Commands.CancelSetBuy(username, commandParams);
                         break;
                     case "SET_SELL_AMOUNT":
                         Commands.SetSellAmount(username, commandParams);
@@ -67,6 +68,7 @@ namespace Titanoboa
                         Commands.SetSellTrigger(username, commandParams);
                         break;
                     case "CANCEL_SET_SELL":
+                        Commands.CancelSetSell(username, commandParams);
                         break;
                     case "DUMPLOG_USER":
                         break;
