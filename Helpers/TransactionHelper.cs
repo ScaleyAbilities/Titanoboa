@@ -76,14 +76,6 @@ namespace Titanoboa
             user.Balance = balance;
         }
 
-        public static void AddTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, string type)
-        {
-            MySqlCommand command = SqlHelper.CreateSqlCommand();
-            command.Prepare();
-            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, type, transactiontime) 
-                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @type, @curTime)";
-        }
-
         public static Transaction CreateTransaction(User user, string stockSymbol, string commandText, decimal balanceChange, int stockAmount, bool pending)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
