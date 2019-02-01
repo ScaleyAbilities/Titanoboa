@@ -54,13 +54,16 @@ namespace Titanoboa
                     case "SET_BUY_AMOUNT":
                         Commands.SetBuyAmount(username, commandParams);
                         break;
+                    case "SET_BUY_TRIGGER":
+                        Commands.SetBuyTrigger(username, commandParams);
+                        break;
                     case "CANCEL_SET_BUY":
                         break;
-                    case "SET_BUY_TRIGGER":
-                        break;
                     case "SET_SELL_AMOUNT":
+                        Commands.SetSellAmount(username, commandParams);
                         break;
                     case "SET_SELL_TRIGGER":
+                        Commands.SetSellTrigger(username, commandParams);
                         break;
                     case "CANCEL_SET_SELL":
                         break;
