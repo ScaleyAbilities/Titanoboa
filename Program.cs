@@ -52,6 +52,7 @@ namespace Titanoboa
                         Commands.CommitSell(username);
                         break;
                     case "SET_BUY_AMOUNT":
+                        Commands.SetBuyAmount(username, commandParams);
                         break;
                     case "CANCEL_SET_BUY":
                         break;

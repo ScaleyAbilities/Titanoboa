@@ -200,6 +200,50 @@ namespace Titanoboa
             return price;
         }
 
+        public static Transaction GetTrigger(User user, string stockSymbol)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            
+            command.CommandText = @"SELECT id, balancechange FROM transactions WHERE transactions.userid = @userid
+                                    AND transactions.command = @commandText
+                                    AND transactions.type = @transactionType
+                                    LIMIT 1";
+            
+            command.Prepare();
+            command.Parameters.AddWithValue("@userid", user.Id);
+            command.Parameters.AddWithValue("@commandText", "BUY_TRIGGER");      
+            command.Parameters.AddWithValue("@transactiontype", "trigger");
+
+            Transaction transaction = null;
+            using (var reader = command.ExecuteReader())
+            {
+                if (reader.HasRows)
+                {
+                    reader.Read();
+                    transaction = new Transaction() {
+                        Id = (int)reader["id"],
+                        BalanceChange = (decimal)reader["balancechange"]
+                    };
+                }
+            }
+
+            return transaction;
+        }
+
+        public static void UpdateTransaction(ref Transaction transaction)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+            
+            command.CommandText = @"UPDATE transactions set
+                                        transactions.balancechange = @balanceChange
+                                        WHERE transactions.id = @id";
+
+            command.Prepare();
+            command.Parameters.AddWithValue("@balanceChange", transaction.BalanceChange);
+            command.Parameters.AddWithValue("@id", transaction.Id);
+            command.ExecuteNonQuery();
+        }
+
         public static int GetStocks(User user, string stockSymbol, bool includePending = false)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
@@ -212,8 +256,8 @@ namespace Titanoboa
                 command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
                                         FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
-                                        AND transactions.command = ""SELL""
-                                        AND transactions.type = ""pending""
+                                        AND transactions.command = 'SELL'
+                                        AND transactions.type = 'pending'
                                         AND transactions.stocksymbol = @stockSymbol
                                         WHERE users.username = @username";
             }
