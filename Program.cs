@@ -24,7 +24,7 @@ namespace Titanoboa
                 return;
             }
 
-            string command = json["cmd"].ToString();
+            string command = json["cmd"].ToString().ToUpper();
             string username = json["usr"].ToString();
             JObject commandParams = (JObject)json["params"];
 
@@ -36,11 +36,12 @@ namespace Titanoboa
             catch (MySqlException ex)
             {
                 Console.Error.WriteLine($"Unable to create logger due to SQL error: {ex.Message}");
+                return;
             }
 
             try 
             {
-                switch (command.ToUpperInvariant())
+                switch (command)
                 {
                     case "ADD":
                         Commands.Add(username, commandParams);

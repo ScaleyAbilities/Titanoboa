@@ -19,12 +19,10 @@ namespace Titanoboa
             {
                 command.CommandText = @"SELECT users.*, balance + SUM(IFNULL(transactions.balancechange, 0)) AS pending_balance
                                         FROM users LEFT JOIN transactions ON users.id = transactions.userid
-                                        AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                        AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
                                         AND transactions.command = ""BUY""
                                         AND transactions.type = ""pending""
                                         WHERE users.username = @username";
-
-                command.Parameters.AddWithValue("@curTime", DateTime.Now);
             }
             
             command.Parameters.AddWithValue("@username", username);
@@ -48,7 +46,7 @@ namespace Titanoboa
             reader.Read();
 
             var user = new User() {
-                Id = (int)reader["id"],
+                Id = Convert.ToUInt64(reader["id"]),
                 Username = (string)reader["username"],
                 Balance = (decimal)reader["balance"]
             };
@@ -87,8 +85,8 @@ namespace Titanoboa
         ) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             command.Prepare();
-            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, stockprice, type, transactiontime) 
-                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @stockprice, @type, @curTime);
+            command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, stockprice, type) 
+                                    values (@userid, @stocksymbol, @command, @balancechange, @stockamount, @stockprice, @type);
                                     SELECT LAST_INSERT_ID();";
 
             command.Parameters.AddWithValue("@userid", user.Id);
@@ -98,15 +96,16 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@stockamount", stockAmount);
             command.Parameters.AddWithValue("@stockprice", stockPrice);
             command.Parameters.AddWithValue("@type", type);
-            command.Parameters.AddWithValue("@curTime", DateTime.Now);
-            var id = (int)command.ExecuteScalar();
+            var id = Convert.ToUInt64(command.ExecuteScalar());
 
             return new Transaction() {
                 Id = id,
                 Command = commandText,
                 BalanceChange = balanceChange,
                 StockSymbol = stockSymbol,
-                StockAmount = stockAmount
+                StockAmount = stockAmount,
+                StockPrice = stockPrice,
+                Type = "completed"
             };
         }
 
@@ -144,11 +143,11 @@ namespace Titanoboa
                 {
                     reader.Read();
                     transaction = new Transaction() {
-                        Id = (int)reader["id"],
+                        Id = Convert.ToUInt64(reader["id"]),
                         Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
-                        StockAmount = (int)reader["stockamount"],
+                        StockAmount = Convert.ToInt32(reader["stockamount"]),
                         StockPrice = (decimal)reader["stockprice"],
                         Type = (string)reader["type"]
                     };
@@ -210,11 +209,11 @@ namespace Titanoboa
                 {
                     reader.Read();
                     transaction = new Transaction() {
-                        Id = (int)reader["id"],
+                        Id = Convert.ToUInt64(reader["id"]),
                         Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
-                        StockAmount = (int)reader["stockamount"],
+                        StockAmount = Convert.ToInt32(reader["stockamount"]),
                         StockPrice = (decimal)reader["stockprice"],
                         Type = (string)reader["type"]
                     };
@@ -276,9 +275,9 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
 
-            var stocks = (int?)command.ExecuteScalar();
-
-            if (stocks == null)
+            var result = command.ExecuteScalar();
+            int stocks;
+            if (result == null)
             {
                 // User stocks entry doesn't exist, create with 0 stocks
                 var createCommand = SqlHelper.CreateSqlCommand();
@@ -288,10 +287,15 @@ namespace Titanoboa
                 createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
                 createCommand.Prepare();
                 createCommand.ExecuteNonQuery();
+
+                stocks = 0;
+            }
+            else
+            {
+                stocks = Convert.ToInt32(result);
             }
 
-            // If it was null, then we created it and made it 0, so return 0 if null
-            return stocks ?? 0;
+            return stocks;
         }
 
         public static void UpdateStocks(User user, string stockSymbol, int newAmount)

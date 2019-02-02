@@ -2,7 +2,7 @@ namespace Titanoboa
 {
     public class Transaction
     {
-        public int Id { get; set; }
+        public ulong Id { get; set; }
         public string Command { get; set; }
         public decimal BalanceChange { get; set; }
         public string StockSymbol { get; set; }

@@ -11,7 +11,7 @@ namespace Titanoboa
             Debug
         }
 
-        private int workId;
+        private ulong workId;
 
         public Logger()
         {
@@ -19,7 +19,7 @@ namespace Titanoboa
             var sqlCommand = SqlHelper.CreateSqlCommand();
             sqlCommand.CommandText = @"INSERT INTO logs_work VALUES (); SELECT LAST_INSERT_ID();";
             sqlCommand.Prepare();
-            workId = (int)sqlCommand.ExecuteScalar();
+            workId = Convert.ToUInt64(sqlCommand.ExecuteScalar());
         }
 
         public void LogCommand(string command, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
