@@ -22,9 +22,6 @@ namespace Titanoboa
             decimal newBalance = user.Balance + amount;
             var transaction = TransactionHelper.CreateTransaction(user, null, "ADD", amount);
 
-            // Log transaction
-            Program.Logger.LogTransaction(user, transaction);
-
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
         } 
 

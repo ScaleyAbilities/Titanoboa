@@ -28,7 +28,7 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@username", username);
             command.Prepare();
             var reader = command.ExecuteReader();
-
+            var createdNewUser = false;
             if (!reader.HasRows)
             {
                 // User doesn't exist, create them
@@ -38,6 +38,8 @@ namespace Titanoboa
                 createCommand.Parameters.AddWithValue("@username", username);
                 createCommand.Prepare();
                 createCommand.ExecuteNonQuery();
+
+                createdNewUser = true;
 
                 // Re-run the get user command
                 reader = command.ExecuteReader();
@@ -51,10 +53,11 @@ namespace Titanoboa
                 Balance = (decimal)reader["balance"]
             };
 
+            if (createdNewUser)
+                Program.Logger.LogEvent(Logger.EventType.System, $"Created new user", user);
+
             if (withPendingBalance)
-            {
                 user.PendingBalance = (decimal)reader["pending_balance"];
-            }
 
             reader.Close();
 
@@ -72,6 +75,8 @@ namespace Titanoboa
             
             // Now that the balance has been updated, update the model
             user.Balance = balance;
+
+            Program.Logger.LogEvent(Logger.EventType.System, $"Updated user balance", user, balance);
         }
 
         public static Transaction CreateTransaction(
@@ -98,15 +103,20 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@type", type);
             var id = Convert.ToUInt64(command.ExecuteScalar());
 
-            return new Transaction() {
+            var transaction = new Transaction() {
                 Id = id,
+                User = user,
                 Command = commandText,
                 BalanceChange = balanceChange,
                 StockSymbol = stockSymbol,
                 StockAmount = stockAmount,
                 StockPrice = stockPrice,
-                Type = "completed"
+                Type = type
             };
+
+            Program.Logger.LogTransaction(transaction);
+            
+            return transaction;
         }
 
         // Method to output json object of all transactions or tansactions for single user.
@@ -144,6 +154,7 @@ namespace Titanoboa
                     reader.Read();
                     transaction = new Transaction() {
                         Id = Convert.ToUInt64(reader["id"]),
+                        User = user,
                         Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
@@ -178,6 +189,8 @@ namespace Titanoboa
             command.ExecuteNonQuery();
 
             transaction.Type = "completed";
+
+            Program.Logger.LogTransaction(transaction);
         }
 
         internal static decimal GetStockPrice(User user, string stockSymbol)
@@ -210,6 +223,7 @@ namespace Titanoboa
                     reader.Read();
                     transaction = new Transaction() {
                         Id = Convert.ToUInt64(reader["id"]),
+                        User = user,
                         Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
@@ -237,6 +251,8 @@ namespace Titanoboa
             command.ExecuteNonQuery();
 
             transaction.BalanceChange = balanceChange;
+
+            Program.Logger.LogTransaction(transaction);
         }
 
         public static void SetTransactionStockPrice(ref Transaction transaction, decimal stockPrice)
@@ -252,6 +268,8 @@ namespace Titanoboa
             command.ExecuteNonQuery();
 
             transaction.StockPrice = stockPrice;
+
+            Program.Logger.LogTransaction(transaction);
         }
 
         public static int GetStocks(User user, string stockSymbol, bool includePending = false)
@@ -288,6 +306,8 @@ namespace Titanoboa
                 createCommand.Prepare();
                 createCommand.ExecuteNonQuery();
 
+                Program.Logger.LogEvent(Logger.EventType.System, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
+
                 stocks = 0;
             }
             else
@@ -308,6 +328,8 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@newAmount", newAmount);
             command.Prepare();
             command.ExecuteNonQuery();
+
+            Program.Logger.LogEvent(Logger.EventType.System, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
         }
 
         public static void DeleteTransaction(Transaction transaction) {
@@ -316,6 +338,8 @@ namespace Titanoboa
             command.Prepare();
             command.Parameters.AddWithValue("@transactionId", transaction.Id);
             command.ExecuteNonQuery();
+
+            Program.Logger.LogEvent(Logger.EventType.System, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
         }
     }
 }

@@ -27,8 +27,6 @@ namespace Titanoboa
 
                 // Cancel transaction
                 TransactionHelper.DeleteTransaction(existingSetBuyTrigger);
-
-                Program.Logger.LogEvent(Logger.EventType.System, "CANCEL_SET_BUY", "Cancelled SET_BUY trigger", user, existingSetBuyTrigger.BalanceChange, existingSetBuyTrigger.StockSymbol);
             }
             
         }

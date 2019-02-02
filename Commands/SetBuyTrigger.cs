@@ -35,8 +35,6 @@ namespace Titanoboa
             }
 
             TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
-            
-            Program.Logger.LogTransaction(user, buyTrigger);
         } 
     }
 }

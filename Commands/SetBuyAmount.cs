@@ -38,8 +38,6 @@ namespace Titanoboa
             {
                 buyTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
             }
-
-            Program.Logger.LogTransaction(user, buyTrigger);
         }
     }
 }

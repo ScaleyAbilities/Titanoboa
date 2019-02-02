@@ -51,8 +51,6 @@ namespace Titanoboa
             TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
 
             TransactionHelper.SetTransactionStockPrice(ref existingTrigger, sellPrice);
-
-            Program.Logger.LogTransaction(user, existingTrigger);
         } 
     }
 }
