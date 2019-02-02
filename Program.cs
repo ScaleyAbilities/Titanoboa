@@ -85,9 +85,8 @@ namespace Titanoboa
                     case "CANCEL_SET_SELL":
                         Commands.CancelSetSell(username, commandParams);
                         break;
-                    case "DUMPLOG_USER":
-                        break;
-                    case "DUMPLOG_ALL":
+                    case "DUMPLOG":
+                        Commands.Dumplog(username, commandParams);
                         break;
                     case "DISPLAY_SUMMARY":
                         Commands.DisplaySummary(username);

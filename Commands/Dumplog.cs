@@ -26,7 +26,7 @@ namespace Titanoboa
 
             var filename = (string)commandParams["filename"];
 
-            if (username != null)
+            if (!string.IsNullOrEmpty(username))
             {
                 var user = TransactionHelper.GetUser(username);
                 Program.Logger.LogCommand("DUMPLOG", user, null, null, filename);

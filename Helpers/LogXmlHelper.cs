@@ -24,16 +24,16 @@ namespace Titanoboa
 
             logCommand.Prepare();
 
-            using (var xmlWriter = XmlWriter.Create(xmlFilename))
+            XmlWriterSettings settings = new XmlWriterSettings { Indent = true };
+
+            using (var xmlWriter = XmlWriter.Create(xmlFilename, settings))
             using (var reader = logCommand.ExecuteReader())
             {
                 xmlWriter.WriteStartDocument();
                 xmlWriter.WriteStartElement("log");
 
-                while (reader.HasRows)
+                while (reader.Read())
                 {
-                    reader.Read();
-
                     var logType = reader["logtype"].ToString();
                     switch (logType)
                     {
@@ -95,8 +95,6 @@ namespace Titanoboa
                             xmlWriter.WriteEndElement();
                             break;
                     }
-                    
-                    reader.NextResult();
                 }
                 
                 xmlWriter.WriteEndElement();
@@ -118,7 +116,7 @@ namespace Titanoboa
             var username = reader["username"].ToString();
             var stockSymbol = reader["stocksymbol"].ToString();
             var filename = reader["filename"].ToString();
-            var funds = reader["funds"].ToString();
+            var funds = reader["amount"].ToString();
 
             if (username != null) xmlWriter.WriteElementString("username", username);
             if (stockSymbol != null) xmlWriter.WriteElementString("stockSymbol", stockSymbol);
