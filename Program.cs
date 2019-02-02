@@ -87,6 +87,7 @@ namespace Titanoboa
                     case "DUMPLOG_ALL":
                         break;
                     case "DISPLAY_SUMMARY":
+                        Commands.DisplaySummary(username);
                         break;
                     default:
                         Console.Error.WriteLine($"Unknown command '{command}'");
