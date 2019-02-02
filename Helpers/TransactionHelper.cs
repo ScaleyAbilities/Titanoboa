@@ -53,13 +53,13 @@ namespace Titanoboa
                 Balance = (decimal)reader["balance"]
             };
 
-            if (createdNewUser)
-                Program.Logger.LogEvent(Logger.EventType.System, $"Created new user", user);
-
             if (withPendingBalance)
                 user.PendingBalance = (decimal)reader["pending_balance"];
 
             reader.Close();
+
+            if (createdNewUser)
+                Program.Logger.LogEvent(Logger.EventType.System, $"Created new user", user);
 
             return user;
         }
