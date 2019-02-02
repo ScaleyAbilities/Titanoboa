@@ -46,9 +46,6 @@ namespace Titanoboa
             var balanceChange = stockAmount * stockPrice * -1;
 
             var transaction = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, stockPrice, "pending");
-            
-            // Log the new transaction
-            Program.Logger.LogTransaction(user, transaction);
         } 
     }
 }

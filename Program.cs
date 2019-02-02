@@ -96,22 +96,22 @@ namespace Titanoboa
             catch (ArgumentException ex)
             {
                 Console.Error.WriteLine($"Invalid parameters for command '{command}': {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, command, ex.Message);
+                Logger.LogEvent(Logger.EventType.Error, ex.Message, null, null, null, command);
             }
             catch (InvalidOperationException ex)
             {
                 Console.Error.WriteLine($"Command '{command}' could not be run: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, command, ex.Message);
+                Logger.LogEvent(Logger.EventType.Error, ex.Message, null, null, null, command);
             }
             catch (MySqlException ex)
             {
                 Console.Error.WriteLine($"Command '{command}' encountered a SQL error: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, command, $"SQL ERROR!!! {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, $"SQL ERROR!!! {ex.Message}", null, null, null, command);
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Command '{command}' encountered an unexpected error: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, command, $"UNEXPECTED ERROR!!! {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, $"UNEXPECTED ERROR!!! {ex.Message}", null, null, null, command);
             }
 
             // Clear the logger now that we are done this unit of work

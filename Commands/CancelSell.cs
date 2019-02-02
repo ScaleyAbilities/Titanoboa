@@ -17,7 +17,6 @@ namespace Titanoboa
             if (transaction != null)
             {
                 TransactionHelper.DeleteTransaction(transaction);
-                Program.Logger.LogEvent(Logger.EventType.System, "CANCEL_SELL", "Cancelled SELL transaction", user, transaction.BalanceChange, transaction.StockSymbol);
             }
          }
         

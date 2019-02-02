@@ -28,8 +28,6 @@ namespace Titanoboa
             {
                 sellTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
             }
-            
-            Program.Logger.LogTransaction(user, sellTrigger);
         }
     }
 }
