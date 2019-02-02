@@ -169,7 +169,7 @@ namespace Titanoboa
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
                         StockAmount = SqlHelper.ConvertToNullableInt32(reader["stockamount"]),
-                        StockPrice = (decimal)reader["stockprice"],
+                        StockPrice = SqlHelper.ConvertToNullableDecimal(reader["stockprice"]),
                         Type = (string)reader["type"]
                     };
                 }
