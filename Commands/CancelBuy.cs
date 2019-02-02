@@ -20,6 +20,10 @@ namespace Titanoboa
             {
                 TransactionHelper.DeleteTransaction(transaction);
             }
+            else 
+            {
+                throw new System.InvalidOperationException("No pending BUY to cancel.");
+            }
         }
     }
 }
