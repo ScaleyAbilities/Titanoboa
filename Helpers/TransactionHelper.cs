@@ -17,16 +17,19 @@ namespace Titanoboa
             }
             else
             {
-                command.CommandText = @"SELECT users.*, balance + SUM(IFNULL(transactions.balancechange, 0)) AS pending_balance
-                                        FROM users LEFT JOIN transactions ON users.id = transactions.userid
-                                        AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
-                                        AND transactions.command = ""BUY""
-                                        AND transactions.type = ""pending""
-                                        WHERE users.username = @username";
+                command.CommandText = 
+                    @"SELECT users.*, balance + COALESCE(pending_sum, 0) AS pending_balance
+                      FROM users LEFT JOIN (
+                          SELECT userid, SUM(balancechange) AS pending_sum FROM transactions
+                          WHERE transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND) AND command = 'BUY' AND type = 'pending'
+                          GROUP BY userid
+                      ) t ON t.userid = users.id
+                      WHERE users.username = @username";
             }
             
             command.Parameters.AddWithValue("@username", username);
             command.Prepare();
+            
             var reader = command.ExecuteReader();
             var createdNewUser = false;
             if (!reader.HasRows)
@@ -45,22 +48,29 @@ namespace Titanoboa
                 reader = command.ExecuteReader();
             }
 
-            reader.Read();
+            // Use try-finally since we couldn't use a using block
+            User user;
+            try
+            {
+                reader.Read();
 
-            var user = new User() {
-                Id = Convert.ToUInt64(reader["id"]),
-                Username = (string)reader["username"],
-                Balance = (decimal)reader["balance"]
-            };
+                user = new User() {
+                    Id = Convert.ToUInt64(reader["id"]),
+                    Username = (string)reader["username"],
+                    Balance = (decimal)reader["balance"]
+                };
 
-            if (withPendingBalance)
-                user.PendingBalance = (decimal)reader["pending_balance"];
-
-            reader.Close();
+                if (withPendingBalance)
+                    user.PendingBalance = (decimal)reader["pending_balance"];
+            }
+            finally
+            {
+                reader.Close();
+            }
 
             if (createdNewUser)
                 Program.Logger.LogEvent(Logger.EventType.System, $"Created new user", user);
-
+            
             return user;
         }
 
