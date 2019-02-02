@@ -28,27 +28,15 @@ namespace Titanoboa
 
             if (username != null)
             {
-                DumplogUser(username, filename);
+                var user = TransactionHelper.GetUser(username);
+                Program.Logger.LogCommand("DUMPLOG", user, null, null, filename);
+                LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
-                DumplogAll(filename);
+                Program.Logger.LogCommand("DUMPLOG", null, null, null, filename);
+                LogXmlHelper.CreateLog(filename);
             }
-        }
-
-        private static void DumplogAll(string filename)
-        {
-            // For now we just assume the user is allowed to do this
-            Console.WriteLine("Getting all transactions...");
-            JObject trans = TransactionHelper.GetAllLogs();
-            
-            // TO DO - write xml to user specified file.
-        }
-        
-        private static void DumplogUser(string username, string filename)
-        {
-            var user = TransactionHelper.GetUser(username);
-            JObject trans = TransactionHelper.GetUserLogs(user);
         }
     }
 }

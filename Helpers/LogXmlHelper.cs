@@ -24,12 +24,12 @@ namespace Titanoboa
 
             logCommand.Prepare();
 
-            var xmlWriter = XmlWriter.Create(xmlFilename);
-            xmlWriter.WriteStartDocument();
-            xmlWriter.WriteStartElement("log");
-
+            using (var xmlWriter = XmlWriter.Create(xmlFilename))
             using (var reader = logCommand.ExecuteReader())
             {
+                xmlWriter.WriteStartDocument();
+                xmlWriter.WriteStartElement("log");
+
                 while (reader.HasRows)
                 {
                     reader.Read();
@@ -98,10 +98,10 @@ namespace Titanoboa
                     
                     reader.NextResult();
                 }
+                
+                xmlWriter.WriteEndElement();
+                xmlWriter.WriteEndDocument();
             }
-
-            xmlWriter.WriteEndElement();
-            xmlWriter.WriteEndDocument();
         }
 
         private static void WriteRequiredValues(XmlWriter xmlWriter, MySqlDataReader reader)
