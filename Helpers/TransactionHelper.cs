@@ -69,7 +69,7 @@ namespace Titanoboa
             }
 
             if (createdNewUser)
-                Program.Logger.LogEvent(Logger.EventType.System, $"Created new user", user);
+                Program.Logger.LogEvent(Logger.EventType.Debug, $"Created new user", user);
             
             return user;
         }
@@ -86,7 +86,7 @@ namespace Titanoboa
             // Now that the balance has been updated, update the model
             user.Balance = balance;
 
-            Program.Logger.LogEvent(Logger.EventType.System, $"Updated user balance", user, balance);
+            Program.Logger.LogEvent(Logger.EventType.Debug, $"Updated user balance", user, balance);
         }
 
         public static Transaction CreateTransaction(
@@ -315,7 +315,7 @@ namespace Titanoboa
                 createCommand.Prepare();
                 createCommand.ExecuteNonQuery();
                 
-                Program.Logger.LogEvent(Logger.EventType.System, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
+                Program.Logger.LogEvent(Logger.EventType.Debug, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
             }
 
             return stocks ?? 0;
@@ -332,7 +332,7 @@ namespace Titanoboa
             command.Prepare();
             command.ExecuteNonQuery();
 
-            Program.Logger.LogEvent(Logger.EventType.System, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
+            Program.Logger.LogEvent(Logger.EventType.Debug, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
         }
 
         public static void DeleteTransaction(Transaction transaction) {
@@ -342,7 +342,7 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@transactionId", transaction.Id);
             command.ExecuteNonQuery();
 
-            Program.Logger.LogEvent(Logger.EventType.System, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
+            Program.Logger.LogEvent(Logger.EventType.Debug, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
         }
     }
 }
