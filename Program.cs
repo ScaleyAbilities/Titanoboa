@@ -43,14 +43,14 @@ namespace Titanoboa
             {
                 switch (command)
                 {
+                    case "QUOTE":
+                        Commands.Quote(username, commandParams);
+                        break;
                     case "ADD":
                         Commands.Add(username, commandParams);
                         break;
                     case "BUY":
                         Commands.Buy(username, commandParams);
-                        break;
-                    case "QUOTE":
-                        Commands.Quote(username, commandParams);
                         break;
                     case "COMMIT_BUY":
                         Commands.CommitBuy(username);
@@ -63,6 +63,9 @@ namespace Titanoboa
                         break;
                     case "COMMIT_SELL":
                         Commands.CommitSell(username);
+                        break;
+                    case "CANCEL_SELL":
+                        Commands.CancelSell(username);
                         break;
                     case "SET_BUY_AMOUNT":
                         Commands.SetBuyAmount(username, commandParams);
