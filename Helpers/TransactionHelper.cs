@@ -293,7 +293,7 @@ namespace Titanoboa
             {
                 command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
                                         FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
-                                        AND transactions.transactiontime >= DATE_SUB(@curTime, INTERVAL 60 SECOND)
+                                        AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
                                         AND transactions.command = 'SELL'
                                         AND transactions.type = 'pending'
                                         AND transactions.stocksymbol = @stockSymbol
@@ -317,7 +317,7 @@ namespace Titanoboa
                 
                 Program.Logger.LogEvent(Logger.EventType.System, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
             }
-            
+
             return stocks ?? 0;
         }
 
