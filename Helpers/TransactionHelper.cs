@@ -147,7 +147,7 @@ namespace Titanoboa
                         Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
-                        StockAmount = Convert.ToInt32(reader["stockamount"]),
+                        StockAmount = SqlHelper.ConvertToNullableInt32(reader["stockamount"]),
                         StockPrice = (decimal)reader["stockprice"],
                         Type = (string)reader["type"]
                     };
@@ -213,8 +213,8 @@ namespace Titanoboa
                         Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
-                        StockAmount = Convert.ToInt32(reader["stockamount"]),
-                        StockPrice = (decimal)reader["stockprice"],
+                        StockAmount = SqlHelper.ConvertToNullableInt32(reader["stockamount"]),
+                        StockPrice = SqlHelper.ConvertToNullableDecimal(reader["stockprice"]),
                         Type = (string)reader["type"]
                     };
                 }
@@ -275,9 +275,8 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
 
-            var result = command.ExecuteScalar();
-            int stocks;
-            if (result == null)
+            var stocks = SqlHelper.ConvertToNullableInt32(command.ExecuteScalar());
+            if (stocks == null)
             {
                 // User stocks entry doesn't exist, create with 0 stocks
                 var createCommand = SqlHelper.CreateSqlCommand();
@@ -287,15 +286,8 @@ namespace Titanoboa
                 createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
                 createCommand.Prepare();
                 createCommand.ExecuteNonQuery();
-
-                stocks = 0;
             }
-            else
-            {
-                stocks = Convert.ToInt32(result);
-            }
-
-            return stocks;
+            return stocks ?? 0;
         }
 
         public static void UpdateStocks(User user, string stockSymbol, int newAmount)
