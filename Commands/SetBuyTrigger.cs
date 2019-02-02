@@ -25,6 +25,9 @@ namespace Titanoboa
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
+
+            Program.Logger.LogCommand("SET_BUY_TRIGGER", user, buyPrice, stockSymbol);
+
             var buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (buyTrigger == null)
             {
@@ -32,7 +35,8 @@ namespace Titanoboa
             }
 
             TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
-            LogHelper.LogCommand(buyTrigger);
+            
+            Program.Logger.LogTransaction(user, buyTrigger);
         } 
     }
 }

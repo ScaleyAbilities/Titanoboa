@@ -15,9 +15,12 @@ namespace Titanoboa
         public static void CommitSell(string username)
         {
             var user = TransactionHelper.GetUser(username, false);
-            var transaction = TransactionHelper.GetLatestPendingTransaction(user, "SELL");
+            
+            Program.Logger.LogCommand("COMMIT_SELL", user);
 
-            if(transaction == null) {
+            var transaction = TransactionHelper.GetLatestPendingTransaction(user, "SELL");
+            if (transaction == null)
+            {
                 throw new InvalidOperationException("No pending SELL transactions to commit.");
             }
 
@@ -31,8 +34,9 @@ namespace Titanoboa
             var newStockAmount = userStockAmount - stockAmount;
 
             TransactionHelper.UpdateStocks(user, stockName, newStockAmount);
-            TransactionHelper.CommitTransaction(transaction);
-            LogHelper.LogCommand(transaction);
+            TransactionHelper.CommitTransaction(ref transaction);
+            
+            Program.Logger.LogTransaction(user, transaction);
         }
     }
 }

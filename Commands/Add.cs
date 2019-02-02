@@ -15,13 +15,17 @@ namespace Titanoboa
             decimal amount = (decimal)commandParams["amount"];
             var user = TransactionHelper.GetUser(username);
 
-            //Update existing user balance
+            // Log this command
+            Program.Logger.LogCommand("ADD", user, amount);
+
+            // Update existing user balance
             decimal newBalance = user.Balance + amount;
             var transaction = TransactionHelper.CreateTransaction(user, null, "ADD", amount);
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
-            Console.WriteLine("Updated user: {0}, balance: {1}", user.Username, user.Balance);
-            LogHelper.LogCommand(transaction);
+            // Log transaction
+            Program.Logger.LogTransaction(user, transaction);
+
+            TransactionHelper.UpdateUserBalance(ref user, newBalance);
         } 
 
     }

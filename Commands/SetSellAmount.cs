@@ -14,6 +14,8 @@ namespace Titanoboa
             var user = TransactionHelper.GetUser(username, true);
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
+
+            Program.Logger.LogCommand("SET_SELL_AMOUNT", user, amount, stockSymbol);
             
             // Check if existing trigger exists
             Transaction sellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
@@ -27,7 +29,7 @@ namespace Titanoboa
                 sellTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
             }
             
-            LogHelper.LogCommand(sellTrigger);
+            Program.Logger.LogTransaction(user, sellTrigger);
         }
     }
 }

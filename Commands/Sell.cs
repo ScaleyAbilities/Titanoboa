@@ -22,9 +22,10 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
             var user = TransactionHelper.GetUser(username);
 
+            Program.Logger.LogCommand("SELL", user, sellAmount, stockSymbol);
+
             // Get current stock price
-            var stockPriceTransaction = TransactionHelper.GetStockPrice(user, stockSymbol);
-            var stockPrice = stockPriceTransaction.StockPrice ?? 0;
+            var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);
 
             // Get amount of stocks user owns
             var pendingStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
@@ -46,7 +47,8 @@ namespace Titanoboa
             stockAmount = -stockAmount;
 
             var transaction = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, stockPrice, "pending");
-            LogHelper.LogCommand(transaction);
+            
+            Program.Logger.LogTransaction(user, transaction);
         } 
     }
 }

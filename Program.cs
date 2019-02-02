@@ -10,6 +10,7 @@ namespace Titanoboa
     {
         internal static MySqlConnection Connection;
         internal static readonly string ServerName = "Titanoboa";
+        internal static Logger Logger = null;
 
         static void RunCommands(JObject json)
         {
@@ -26,6 +27,16 @@ namespace Titanoboa
             string command = json["cmd"].ToString();
             string username = json["usr"].ToString();
             JObject commandParams = (JObject)json["params"];
+
+            try
+            {
+                // Set up a logger for this unit of work
+                Logger = new Logger();
+            }
+            catch (MySqlException ex)
+            {
+                Console.Error.WriteLine($"Unable to create logger due to SQL error: {ex.Message}");
+            }
 
             try 
             {
@@ -84,19 +95,26 @@ namespace Titanoboa
             catch (ArgumentException ex)
             {
                 Console.Error.WriteLine($"Invalid parameters for command '{command}': {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, command, ex.Message);
             }
             catch (InvalidOperationException ex)
             {
                 Console.Error.WriteLine($"Command '{command}' could not be run: {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, command, ex.Message);
             }
             catch (MySqlException ex)
             {
                 Console.Error.WriteLine($"Command '{command}' encountered a SQL error: {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, command, $"SQL ERROR!!! {ex.Message}");
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"Command '{command}' encountered an unexpected error: {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, command, $"UNEXPECTED ERROR!!! {ex.Message}");
             }
+
+            // Clear the logger now that we are done this unit of work
+            Logger = null;
         }
 
         static void Main(string[] args)

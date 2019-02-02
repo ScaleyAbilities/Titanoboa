@@ -103,6 +103,7 @@ namespace Titanoboa
 
             return new Transaction() {
                 Id = id,
+                Command = commandText,
                 BalanceChange = balanceChange,
                 StockSymbol = stockSymbol,
                 StockAmount = stockAmount
@@ -124,7 +125,8 @@ namespace Titanoboa
         public static Transaction GetLatestPendingTransaction(User user, string commandText) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
-            command.CommandText = @"SELECT id, balancechange, stocksymbol, stockamount FROM transactions WHERE transactions.userid = @userid
+            command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
+                                    FROM transactions WHERE transactions.userid = @userid
                                     AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
                                     AND transactions.command = @commandText
                                     AND transactions.type = 'pending'
@@ -143,9 +145,12 @@ namespace Titanoboa
                     reader.Read();
                     transaction = new Transaction() {
                         Id = (int)reader["id"],
+                        Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
                         StockSymbol = (string)reader["stocksymbol"],
-                        StockAmount = (int)reader["stockamount"]
+                        StockAmount = (int)reader["stockamount"],
+                        StockPrice = (decimal)reader["stockprice"],
+                        Type = (string)reader["type"]
                     };
                 }
             }
@@ -164,7 +169,7 @@ namespace Titanoboa
             return (bool)command.ExecuteScalar();
         }
 
-        public static void CommitTransaction(Transaction transaction)
+        public static void CommitTransaction(ref Transaction transaction)
         {
             var command = SqlHelper.CreateSqlCommand();
 
@@ -172,30 +177,31 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@id", transaction.Id);
             command.Prepare();
             command.ExecuteNonQuery();
+
+            transaction.Type = "completed";
         }
 
-        internal static Transaction GetStockPrice(User user, string stockSymbol)
+        internal static decimal GetStockPrice(User user, string stockSymbol)
         {
             // TODO: Implement actual quote server
             var price = 1.00m;
-            var transaction = CreateTransaction(user, stockSymbol, "QUOTE", 0.00m, 1, price);
-            LogHelper.LogQuoteServer(transaction, DateTime.Now, "i'm a crypto key woohoo");
-            return transaction;
+            Program.Logger.LogQuoteServer(user, price, stockSymbol, DateTime.Now, "i'm a crypto key woohoo");
+            return price;
         }
 
         public static Transaction GetTriggerTransaction(User user, string stockSymbol, string triggerType)
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
             
-            command.CommandText = @"SELECT id, balancechange FROM transactions WHERE transactions.userid = @userid
+            command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
+                                    FROM transactions WHERE transactions.userid = @userid
                                     AND transactions.command = @commandText
-                                    AND transactions.type = @transactionType
+                                    AND transactions.type = 'trigger'
                                     LIMIT 1";
             
             command.Prepare();
             command.Parameters.AddWithValue("@userid", user.Id);
-            command.Parameters.AddWithValue("@commandText", triggerType);      
-            command.Parameters.AddWithValue("@transactiontype", "trigger");
+            command.Parameters.AddWithValue("@commandText", triggerType);
 
             Transaction transaction = null;
             using (var reader = command.ExecuteReader())
@@ -205,8 +211,12 @@ namespace Titanoboa
                     reader.Read();
                     transaction = new Transaction() {
                         Id = (int)reader["id"],
+                        Command = (string)reader["command"],
                         BalanceChange = (decimal)reader["balancechange"],
+                        StockSymbol = (string)reader["stocksymbol"],
                         StockAmount = (int)reader["stockamount"],
+                        StockPrice = (decimal)reader["stockprice"],
+                        Type = (string)reader["type"]
                     };
                 }
             }
@@ -296,9 +306,9 @@ namespace Titanoboa
             command.ExecuteNonQuery();
         }
 
-        public static void CancelTransaction(Transaction transaction) {
+        public static void DeleteTransaction(Transaction transaction) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
-            command.CommandText = @"UPDATE transactions SET type = 'canceled' WHERE transactions.id = @transactionId";
+            command.CommandText = @"DELETE FROM transactions WHERE transactions.id = @transactionId";
             command.Prepare();
             command.Parameters.AddWithValue("@transactionId", transaction.Id);
             command.ExecuteNonQuery();

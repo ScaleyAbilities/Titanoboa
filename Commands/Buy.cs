@@ -25,6 +25,9 @@ namespace Titanoboa
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
+
+            // Log the command
+            Program.Logger.LogCommand("BUY", user, amount, stockSymbol);
             
             if (user.PendingBalance < amount)
             {
@@ -32,8 +35,7 @@ namespace Titanoboa
             }
 
             // Get current stock price
-            var stockPriceTransaction = TransactionHelper.GetStockPrice(user, stockSymbol);
-            var stockPrice = stockPriceTransaction.StockPrice ?? 0;
+            var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);
 
             if (amount < stockPrice)
             {
@@ -44,7 +46,9 @@ namespace Titanoboa
             var balanceChange = stockAmount * stockPrice * -1;
 
             var transaction = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, stockPrice, "pending");
-            LogHelper.LogCommand(transaction);
+            
+            // Log the new transaction
+            Program.Logger.LogTransaction(user, transaction);
         } 
     }
 }

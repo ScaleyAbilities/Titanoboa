@@ -7,24 +7,30 @@ namespace Titanoboa
         public static void CancelSetBuy(string username, JObject commandParams) {
             ParamHelper.ValidateParamsExist(commandParams, "stock");
 
-            //Unpack JObject
+            // Unpack JObject
             var stockSymbol = commandParams["stock"].ToString();
 
-            //Get user
+            // Get user
             var user = TransactionHelper.GetUser(username);
+
+            Program.Logger.LogCommand("CANCEL_SET_BUY", user, null, stockSymbol);
 
             // Get trigger to cancel
             var existingSetBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            var refund = existingSetBuyTrigger.BalanceChange;
+            if (existingSetBuyTrigger != null)
+            {
+                var refund = existingSetBuyTrigger.BalanceChange;
 
-            // Refund user
-            var newBalance = user.Balance + refund;
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
+                // Refund user
+                var newBalance = user.Balance + refund;
+                TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
-            // Cancel transaction
-            TransactionHelper.CancelTransaction(existingSetBuyTrigger);
+                // Cancel transaction
+                TransactionHelper.DeleteTransaction(existingSetBuyTrigger);
 
-            LogHelper.LogCommand(existingSetBuyTrigger);
+                Program.Logger.LogEvent(Logger.EventType.System, "CANCEL_SET_BUY", "Cancelled SET_BUY trigger", user, existingSetBuyTrigger.BalanceChange, existingSetBuyTrigger.StockSymbol);
+            }
+            
         }
         
     }

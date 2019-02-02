@@ -16,9 +16,12 @@ namespace Titanoboa
             
             var stockSymbol = (string)commandParams["stock"];
             var user = TransactionHelper.GetUser(username);
-            var quoteTransaction = TransactionHelper.GetStockPrice(user, stockSymbol);
-            
-            LogHelper.LogCommand(quoteTransaction);
+
+            Program.Logger.LogCommand("QUOTE", user, null, stockSymbol);
+
+            var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);
+
+            // TODO: Do something with price
         }
     }
 }

@@ -14,6 +14,8 @@ namespace Titanoboa
             var user = TransactionHelper.GetUser(username, true);
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
+
+            Program.Logger.LogCommand("SET_BUY_AMOUNT", user, amount, stockSymbol);
             
             // Not enough funds for trigger
             if (user.PendingBalance < amount)
@@ -37,7 +39,7 @@ namespace Titanoboa
                 buyTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
             }
 
-            LogHelper.LogCommand(buyTrigger);
+            Program.Logger.LogTransaction(user, buyTrigger);
         }
     }
 }
