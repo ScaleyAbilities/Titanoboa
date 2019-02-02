@@ -76,10 +76,10 @@ namespace Titanoboa
         {
             var sqlCommand = SqlHelper.CreateSqlCommand();
             sqlCommand.CommandText = @"INSERT INTO logs (logtype, server, workid, message, userid, amount)
-                                       VALUES ('transaction', @server, @workid, @command, @userid, @amount)";
+                                       VALUES ('transaction', @server, @workid, @message, @userid, @amount)";
             sqlCommand.Parameters.AddWithValue("@server", Program.ServerName);
             sqlCommand.Parameters.AddWithValue("@workid", workId);
-            sqlCommand.Parameters.AddWithValue("@command", transaction.Command);
+            sqlCommand.Parameters.AddWithValue("@message", $"{transaction.Command} ({transaction.Type})");
             sqlCommand.Parameters.AddWithValue("@userid", user.Id);
             sqlCommand.Parameters.AddWithValue("@amount", transaction.BalanceChange);
             sqlCommand.Prepare();

@@ -119,14 +119,14 @@ namespace Titanoboa
 
         static void Main(string[] args)
         {
-            SqlHelper.openSqlConnection();
+            SqlHelper.OpenSqlConnection();
             RabbitHelper.CreateConsumer(RunCommands);
 
             Console.WriteLine("Press [enter] to exit.");
             Console.ReadLine();
             
             //Close connection
-            SqlHelper.closeSqlConnection();
+            SqlHelper.CloseSqlConnection();
         }
     }
 }
