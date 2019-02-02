@@ -292,12 +292,12 @@ namespace Titanoboa
             else
             {
                 command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
-                                        FROM stocks LEFT JOIN transactions ON users.id = transactions.userid
+                                        FROM stocks LEFT JOIN transactions ON stocks.userid = transactions.userid
                                         AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
                                         AND transactions.command = 'SELL'
                                         AND transactions.type = 'pending'
                                         AND transactions.stocksymbol = @stockSymbol
-                                        WHERE users.username = @username";
+                                        WHERE stocks.userid = @userid";
             }
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);

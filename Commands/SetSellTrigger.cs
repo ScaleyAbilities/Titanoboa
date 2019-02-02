@@ -37,12 +37,17 @@ namespace Titanoboa
 
             var sellAmount = existingTrigger.BalanceChange;
 
+            if (sellAmount == 0)
+            {
+                throw new System.InvalidOperationException("Cannot sell 0 dollars worth of stocks.");
+            }
+
             // Check if they have enough to sell
             var userStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
             var numStockToSell = (int)Math.Floor(sellAmount / sellPrice);
             if (userStockAmount < numStockToSell)
             {
-                throw new InvalidOperationException("Insufficient stock for SET_SELL_TRIGGER, need to choose a higher price point.");
+                throw new InvalidOperationException("Insufficient stock for SET_SELL_TRIGGER.");
             }
 
             // Subtract stocks from user account
