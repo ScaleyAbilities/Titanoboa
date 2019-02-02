@@ -303,7 +303,8 @@ namespace Titanoboa
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
 
-            var stocks = SqlHelper.ConvertToNullableInt32(command.ExecuteScalar());
+            var stocks = (int?)command.ExecuteScalar();
+
             if (stocks == null)
             {
                 // User stocks entry doesn't exist, create with 0 stocks
