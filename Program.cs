@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
@@ -123,14 +125,24 @@ namespace Titanoboa
             CurrentCommand = null;
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             SqlHelper.OpenSqlConnection();
             RabbitHelper.CreateConsumer(RunCommands);
 
-            Console.WriteLine("Press [enter] to exit.");
-            Console.ReadLine();
-            
+            if (args.Contains("--no-input"))
+            {
+                while (true)
+                {
+                    await Task.Delay(int.MaxValue);
+                }
+            } 
+            else 
+            {
+                Console.WriteLine("Press [enter] to exit.");
+                Console.ReadLine();
+            }
+
             //Close connection
             SqlHelper.CloseSqlConnection();
         }
