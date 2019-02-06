@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using RabbitMQ.Client.Exceptions;
 
 namespace Titanoboa
 {
@@ -26,7 +28,22 @@ namespace Titanoboa
                 Password = "abilities"
             };
 
-            rabbitConnection = factory.CreateConnection();
+            // Try connecting to rabbit until it works
+            var connected = false;
+            while (!connected)
+            {
+                try
+                {
+                    rabbitConnection = factory.CreateConnection();
+                    connected = true;
+                }
+                catch (BrokerUnreachableException ex)
+                {
+                    Console.Error.WriteLine("Unable to connect to Rabbit, retrying...");
+                    Thread.Sleep(3000);
+                }
+            }
+            
             rabbitChannel = rabbitConnection.CreateModel();
 
             rabbitChannel.QueueDeclare(
