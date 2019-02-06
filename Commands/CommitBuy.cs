@@ -15,7 +15,7 @@ namespace Titanoboa
         public static void CommitBuy(string username) {
             var user = TransactionHelper.GetUser(username, false);
 
-            Program.Logger.LogCommand("COMMIT_BUY", user);
+            Program.Logger.LogCommand(user);
             
             var transaction = TransactionHelper.GetLatestPendingTransaction(user, "BUY");
             if (transaction == null)

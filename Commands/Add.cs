@@ -16,7 +16,7 @@ namespace Titanoboa
             var user = TransactionHelper.GetUser(username);
 
             // Log this command
-            Program.Logger.LogCommand("ADD", user, amount);
+            Program.Logger.LogCommand(user, amount);
 
             // Update existing user balance
             decimal newBalance = user.Balance + amount;

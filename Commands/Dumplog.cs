@@ -29,12 +29,12 @@ namespace Titanoboa
             if (!string.IsNullOrEmpty(username))
             {
                 var user = TransactionHelper.GetUser(username);
-                Program.Logger.LogCommand("DUMPLOG", user, null, null, filename);
+                Program.Logger.LogCommand(user, null, null, filename);
                 LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
-                Program.Logger.LogCommand("DUMPLOG", null, null, null, filename);
+                Program.Logger.LogCommand(null, null, null, filename);
                 LogXmlHelper.CreateLog(filename);
             }
         }

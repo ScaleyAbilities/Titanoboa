@@ -13,7 +13,7 @@ namespace Titanoboa
             // Get user
             var user = TransactionHelper.GetUser(username);
 
-            Program.Logger.LogCommand("CANCEL_SET_BUY", user, null, stockSymbol);
+            Program.Logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
             var existingSetBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");

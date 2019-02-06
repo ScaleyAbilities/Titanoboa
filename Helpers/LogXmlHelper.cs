@@ -48,7 +48,7 @@ namespace Titanoboa
                             xmlWriter.WriteStartElement("quoteServer");
                             WriteRequiredValues(xmlWriter, reader);
 
-                            xmlWriter.WriteElementString("price", reader["price"].ToString());
+                            xmlWriter.WriteElementString("price", reader["amount"].ToString());
                             xmlWriter.WriteElementString("stockSymbol", reader["stocksymbol"].ToString());
                             xmlWriter.WriteElementString("username", reader["username"].ToString());
                             xmlWriter.WriteElementString("quoteServerTime", UnixTimestamp((DateTime)reader["quoteservertime"]));
@@ -86,7 +86,7 @@ namespace Titanoboa
                             break;
 
                         case "debug":
-                            xmlWriter.WriteStartElement("debug");
+                            xmlWriter.WriteStartElement("debugEvent");
                             WriteRequiredValues(xmlWriter, reader);
                             WriteCommonValues(xmlWriter, reader);
 
@@ -118,15 +118,15 @@ namespace Titanoboa
             var filename = reader["filename"].ToString();
             var funds = reader["amount"].ToString();
 
-            if (username != null) xmlWriter.WriteElementString("username", username);
-            if (stockSymbol != null) xmlWriter.WriteElementString("stockSymbol", stockSymbol);
-            if (filename != null) xmlWriter.WriteElementString("filename", filename);
-            if (funds != null) xmlWriter.WriteElementString("funds", funds);
+            if (!string.IsNullOrEmpty(username)) xmlWriter.WriteElementString("username", username);
+            if (!string.IsNullOrEmpty(stockSymbol)) xmlWriter.WriteElementString("stockSymbol", stockSymbol);
+            if (!string.IsNullOrEmpty(filename)) xmlWriter.WriteElementString("filename", filename);
+            if (!string.IsNullOrEmpty(funds)) xmlWriter.WriteElementString("funds", funds);
         }
 
         private static string UnixTimestamp(DateTime time)
         {
-            return DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds.ToString();
+            return Math.Round((DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000)).ToString();
         }
     }
 }

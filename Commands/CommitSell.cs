@@ -16,7 +16,7 @@ namespace Titanoboa
         {
             var user = TransactionHelper.GetUser(username, false);
             
-            Program.Logger.LogCommand("COMMIT_SELL", user);
+            Program.Logger.LogCommand(user);
 
             var transaction = TransactionHelper.GetLatestPendingTransaction(user, "SELL");
             if (transaction == null)

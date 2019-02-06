@@ -15,7 +15,7 @@ namespace Titanoboa
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            Program.Logger.LogCommand("SET_BUY_AMOUNT", user, amount, stockSymbol);
+            Program.Logger.LogCommand(user, amount, stockSymbol);
             
             // Not enough funds for trigger
             if (user.PendingBalance < amount)

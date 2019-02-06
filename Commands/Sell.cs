@@ -22,7 +22,7 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
             var user = TransactionHelper.GetUser(username);
 
-            Program.Logger.LogCommand("SELL", user, sellAmount, stockSymbol);
+            Program.Logger.LogCommand(user, sellAmount, stockSymbol);
 
             // Get current stock price
             var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);

@@ -42,12 +42,12 @@ namespace Titanoboa
 
         public static int? ConvertToNullableInt32(object num)
         {
-            return Convert.IsDBNull(num) ? null : (int?)Convert.ToInt32(num);
+            return Convert.IsDBNull(num) || num == null ? null : (int?)Convert.ToInt32(num);
         }
 
         public static decimal? ConvertToNullableDecimal(object num)
         {
-            return Convert.IsDBNull(num) ? null : (decimal?)(num);
+            return Convert.IsDBNull(num) || num == null ? null : (decimal?)(num);
         }
     }
 }

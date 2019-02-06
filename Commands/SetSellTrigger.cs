@@ -26,7 +26,7 @@ namespace Titanoboa
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
 
-            Program.Logger.LogCommand("SET_SELL_TRIGGER", user, sellPrice, stockSymbol);
+            Program.Logger.LogCommand(user, sellPrice, stockSymbol);
 
             // Get the existing trigger to find amount in $$ the user wants to sell of their stock
             var existingTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");

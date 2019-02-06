@@ -22,14 +22,14 @@ namespace Titanoboa
             workId = Convert.ToUInt64(sqlCommand.ExecuteScalar());
         }
 
-        public void LogCommand(string command, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
+        public void LogCommand(User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
             var sqlCommand = SqlHelper.CreateSqlCommand();
             sqlCommand.CommandText = @"INSERT INTO logs (logtype, server, workid, command, userid, amount, stocksymbol, filename)
                                        VALUES ('command', @server, @workid, @command, @userid, @amount, @stocksymbol, @filename)";
             sqlCommand.Parameters.AddWithValue("@server", Program.ServerName);
             sqlCommand.Parameters.AddWithValue("@workid", workId);
-            sqlCommand.Parameters.AddWithValue("@command", command);
+            sqlCommand.Parameters.AddWithValue("@command", Program.CurrentCommand);
             sqlCommand.Parameters.AddWithValue("@userid", user?.Id);
             sqlCommand.Parameters.AddWithValue("@amount", amount);
             sqlCommand.Parameters.AddWithValue("@stocksymbol", stockSymbol);
@@ -42,7 +42,7 @@ namespace Titanoboa
         {
             var sqlCommand = SqlHelper.CreateSqlCommand();
             sqlCommand.CommandText = @"INSERT INTO logs (logtype, server, workid, userid, amount, stocksymbol, quoteservertime, cryptokey)
-                                       VALUES ('command', @server, @workid, @userid, @amount, @stocksymbol, @quoteservertime, @cryptokey)";
+                                       VALUES ('quote', @server, @workid, @userid, @amount, @stocksymbol, @quoteservertime, @cryptokey)";
             sqlCommand.Parameters.AddWithValue("@server", Program.ServerName);
             sqlCommand.Parameters.AddWithValue("@workid", workId);
             sqlCommand.Parameters.AddWithValue("@userid", user.Id);
@@ -54,19 +54,19 @@ namespace Titanoboa
             sqlCommand.ExecuteNonQuery();
         }
 
-        public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string command = null, string filename = null)
+        public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
             var sqlCommand = SqlHelper.CreateSqlCommand();
-            sqlCommand.CommandText = @"INSERT INTO logs (logtype, server, workid, message, userid, amount, stocksymbol, command, filename)
-                                       VALUES (@type, @server, @workid, @message, @userid, @amount, @stocksymbol, @command, @filename)";
+            sqlCommand.CommandText = @"INSERT INTO logs (logtype, server, workid, command, message, userid, amount, stocksymbol, filename)
+                                       VALUES (@type, @server, @workid, @command, @message, @userid, @amount, @stocksymbol, @filename)";
             sqlCommand.Parameters.AddWithValue("@type", type.ToString("F").ToLower());
             sqlCommand.Parameters.AddWithValue("@server", Program.ServerName);
             sqlCommand.Parameters.AddWithValue("@workid", workId);
+            sqlCommand.Parameters.AddWithValue("@command", Program.CurrentCommand);
             sqlCommand.Parameters.AddWithValue("@message", message);
             sqlCommand.Parameters.AddWithValue("@userid", user?.Id);
             sqlCommand.Parameters.AddWithValue("@amount", amount);
             sqlCommand.Parameters.AddWithValue("@stocksymbol", stockSymbol);
-            sqlCommand.Parameters.AddWithValue("@command", command);
             sqlCommand.Parameters.AddWithValue("@filename", filename);
             sqlCommand.Prepare();
             sqlCommand.ExecuteNonQuery();

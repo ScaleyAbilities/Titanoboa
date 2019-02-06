@@ -11,6 +11,7 @@ namespace Titanoboa
         internal static MySqlConnection Connection;
         internal static readonly string ServerName = "Titanoboa";
         internal static Logger Logger = null;
+        internal static string CurrentCommand = null;
 
         static void RunCommands(JObject json)
         {
@@ -24,7 +25,7 @@ namespace Titanoboa
                 return;
             }
 
-            string command = json["cmd"].ToString().ToUpper();
+            CurrentCommand = json["cmd"].ToString().ToUpper();
             string username = json["usr"].ToString();
             JObject commandParams = (JObject)json["params"];
 
@@ -41,7 +42,7 @@ namespace Titanoboa
 
             try 
             {
-                switch (command)
+                switch (CurrentCommand)
                 {
                     case "QUOTE":
                         Commands.Quote(username, commandParams);
@@ -92,33 +93,34 @@ namespace Titanoboa
                         Commands.DisplaySummary(username);
                         break;
                     default:
-                        Console.Error.WriteLine($"Unknown command '{command}'");
+                        Console.Error.WriteLine($"Unknown command '{CurrentCommand}'");
                         break;
                 }
             }
             catch (ArgumentException ex)
             {
-                Console.Error.WriteLine($"Invalid parameters for command '{command}': {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, ex.Message, null, null, null, command);
+                Console.Error.WriteLine($"Invalid parameters for command '{CurrentCommand}': {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                Console.Error.WriteLine($"Command '{command}' could not be run: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, ex.Message, null, null, null, command);
+                Console.Error.WriteLine($"Command '{CurrentCommand}' could not be run: {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, ex.Message);
             }
             catch (MySqlException ex)
             {
-                Console.Error.WriteLine($"Command '{command}' encountered a SQL error: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, $"SQL ERROR!!! {ex.Message}", null, null, null, command);
+                Console.Error.WriteLine($"Command '{CurrentCommand}' encountered a SQL error: {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, $"SQL ERROR!!! {ex.Message}");
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Command '{command}' encountered an unexpected error: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, $"UNEXPECTED ERROR!!! {ex.Message}", null, null, null, command);
+                Console.Error.WriteLine($"Command '{CurrentCommand}' encountered an unexpected error: {ex.Message}");
+                Logger.LogEvent(Logger.EventType.Error, $"UNEXPECTED ERROR!!! {ex.Message}");
             }
 
             // Clear the logger now that we are done this unit of work
             Logger = null;
+            CurrentCommand = null;
         }
 
         static void Main(string[] args)

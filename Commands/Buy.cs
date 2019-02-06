@@ -27,7 +27,7 @@ namespace Titanoboa
             var user = TransactionHelper.GetUser(username, true);
 
             // Log the command
-            Program.Logger.LogCommand("BUY", user, amount, stockSymbol);
+            Program.Logger.LogCommand(user, amount, stockSymbol);
             
             if (user.PendingBalance < amount)
             {

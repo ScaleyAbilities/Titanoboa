@@ -129,18 +129,6 @@ namespace Titanoboa
             return transaction;
         }
 
-        // Method to output json object of all transactions or tansactions for single user.
-        internal static JObject GetAllLogs()
-        {
-            throw new NotImplementedException();
-        }
-
-        // Method to output json object of all transactions or tansactions for single user.
-        internal static JObject GetUserLogs(User user)
-        {
-            throw new NotImplementedException();
-        }
-
         public static Transaction GetLatestPendingTransaction(User user, string commandText) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
@@ -286,24 +274,27 @@ namespace Titanoboa
         {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 
-            if(!includePending) {
+            if (!includePending)
+            {
                 command.CommandText = @"SELECT amount FROM stocks WHERE stocksymbol = @stockSymbol AND userid = @userid";
             }
             else
             {
-                command.CommandText = @"SELECT stocks.amount + SUM(IFNULL(transactions.stockamount, 0))
-                                        FROM stocks LEFT JOIN transactions ON stocks.userid = transactions.userid
-                                        AND transactions.transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
-                                        AND transactions.command = 'SELL'
-                                        AND transactions.type = 'pending'
-                                        AND transactions.stocksymbol = @stockSymbol
-                                        WHERE stocks.userid = @userid";
+                command.CommandText = 
+                    @"SELECT stocks.amount + COALESCE(pending_sum, 0) AS pending_balance
+                      FROM stocks LEFT JOIN (
+                          SELECT userid, SUM(stockamount) AS pending_sum FROM transactions
+                          WHERE transactiontime >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
+                          AND command = 'SELL' AND type = 'pending' AND stocksymbol = @stockSymbol
+                          GROUP BY userid
+                      ) t ON t.userid = stocks.userid
+                      WHERE stocks.userid = @userid";
             }
             command.Prepare();
             command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
             command.Parameters.AddWithValue("@userid", user.Id);
 
-            var stocks = (int?)command.ExecuteScalar();
+            var stocks = SqlHelper.ConvertToNullableInt32(command.ExecuteScalar());
 
             if (stocks == null)
             {

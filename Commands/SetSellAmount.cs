@@ -15,7 +15,7 @@ namespace Titanoboa
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            Program.Logger.LogCommand("SET_SELL_AMOUNT", user, amount, stockSymbol);
+            Program.Logger.LogCommand(user, amount, stockSymbol);
             
             // Check if existing trigger exists
             Transaction sellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
