@@ -129,6 +129,8 @@ namespace Titanoboa
         {
             SqlHelper.OpenSqlConnection();
             RabbitHelper.CreateConsumer(RunCommands);
+            
+            Console.WriteLine("Titanoboa running...");
 
             if (args.Contains("--no-input"))
             {
