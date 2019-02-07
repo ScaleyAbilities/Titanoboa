@@ -13,6 +13,7 @@ namespace Titanoboa
         private const int quotePort = 4448;
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
+        private static bool usingQuoteSrv = Environment.GetEnvironmentVariable("USING_QUOTE_SRV") == "TRUE" ? true : false;
         private static Socket skt;
         static QuoteHelper() {
             try
