@@ -22,7 +22,7 @@ namespace Titanoboa
                 IPAddress ipAddress = ipHostInfo.AddressList[0];
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, quotePort);
 
-                Socket skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 skt.Connect(remoteEP);
                 Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
             }
