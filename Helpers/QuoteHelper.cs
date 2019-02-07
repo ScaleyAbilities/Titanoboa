@@ -34,19 +34,10 @@ namespace Titanoboa
         public static decimal GetQuote(User user, string stockSymbol){
             
             var bytes = new byte[1024];
-            var msg = Encoding.ASCII.GetBytes(user + "," + stockSymbol + "\n");
-            
-            Console.WriteLine("Senging message: " + msg);
+            var msg = Encoding.ASCII.GetBytes($"{user},{stockSymbol}\n");
+
             var bytesSent = skt.Send(msg);
-            Console.WriteLine("Sent {0} bytes", bytesSent);
-
-            while (true) {
-                Console.WriteLine("{0} bytes available", skt.Available);
-                System.Threading.Thread.Sleep(1000);
-            }
-
             var bytesRecv = skt.Receive(bytes);
-            Console.WriteLine("Recieved {0} bytes", bytesRecv);
             
             var msgRecv = Encoding.UTF8.GetString(bytes);
             var recv = msgRecv.Split(',');
