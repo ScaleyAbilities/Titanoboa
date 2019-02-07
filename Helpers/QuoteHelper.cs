@@ -12,8 +12,8 @@ namespace Titanoboa
         private const int quotePort = 4448;
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
-
-        public static Socket AsyncConnect() {
+        private static Socket skt;
+        static QuoteHelper() {
             //https://docs.microsoft.com/en-us/dotnet/framework/network-programming/asynchronous-client-socket-example
             try
             {
@@ -24,13 +24,10 @@ namespace Titanoboa
                 Socket skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 skt.Connect(remoteEP);
                 Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
-
-                return skt;
             }
             catch (Exception e)
             {
                 Console.WriteLine("Unable to establish connection with Quote Server: {0}", e.ToString());
-                return null;
             }
         }
     }
