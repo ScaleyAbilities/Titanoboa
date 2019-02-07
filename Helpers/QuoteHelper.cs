@@ -16,6 +16,7 @@ namespace Titanoboa
         private static bool usingQuoteSrv = Environment.GetEnvironmentVariable("USING_QUOTE_SRV") == "TRUE" ? true : false;
         private static Socket skt;
         static QuoteHelper() {
+            if(!usingQuoteSrv) return;
             try
             {
                 IPHostEntry ipHostInfo = Dns.GetHostEntry(quoteServer);
@@ -33,7 +34,7 @@ namespace Titanoboa
         }
 
         public static decimal GetQuote(User user, string stockSymbol){
-            
+            if(usingQuoteSrv) return 10.00m;
             var bytes = new byte[1024];
             var msg = Encoding.ASCII.GetBytes($"{user},{stockSymbol}\n");
 
