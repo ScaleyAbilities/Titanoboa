@@ -32,7 +32,8 @@ namespace Titanoboa
             }
         }
 
-        public static decimal GetQoute(User user, string stockSymbol){
+        public static decimal GetQuote(User user, string stockSymbol){
+            
             var bytes = new byte[1024];
             var msg = Encoding.ASCII.GetBytes(user + "," + stockSymbol);
             
