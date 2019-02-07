@@ -15,7 +15,6 @@ namespace Titanoboa
         private static string quoteServer = "quoteserve.seng.uvic.ca";
         private static Socket skt;
         static QuoteHelper() {
-            //https://docs.microsoft.com/en-us/dotnet/framework/network-programming/asynchronous-client-socket-example
             try
             {
                 IPHostEntry ipHostInfo = Dns.GetHostEntry(quoteServer);
@@ -37,8 +36,11 @@ namespace Titanoboa
             var bytes = new byte[1024];
             var msg = Encoding.ASCII.GetBytes(user + "," + stockSymbol);
             
+            Console.WriteLine("Senging message: " + msg);
             var bytesSent = skt.Send(msg);
+            Console.WriteLine("Sent {0} bytes", bytesSent);
             var bytesRecv = skt.Receive(bytes);
+            Console.WriteLine("Recieved {0} bytes", bytesRecv);
             
             var msgRecv = Encoding.UTF8.GetString(bytes);
             var recv = msgRecv.Split(',');
