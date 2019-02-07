@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading;
 using MySql.Data;
 using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
@@ -8,27 +9,33 @@ namespace Titanoboa
 {
     public static class SqlHelper
     {
+        private static MySqlConnection connection;
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
         private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
+
         public static void OpenSqlConnection()
         {
-            Program.Connection = new MySqlConnection(connectionString);
-            try
+            connection = new MySqlConnection(connectionString);
+
+            var connected = false;
+            while (!connected)
             {
-                // Open Connection
-                Console.WriteLine("Connecting to Daboia...");
-                Program.Connection.Open();
-            }
-            catch (Exception e)
-            {
-                Console.Error.WriteLine(e.Message);
-                Environment.Exit(1);
+                try
+                {
+                    connection.Open();
+                    connected = true;
+                }
+                catch (MySqlException ex)
+                {
+                    Console.Error.WriteLine($"Unable to connect to Database, retrying... ({ex.Message})");
+                    Thread.Sleep(3000);
+                }
             }
         }
 
         public static bool CloseSqlConnection()
         {
-            Program.Connection.Close();
+            connection.Close();
             Console.WriteLine("Done.");
             return true;
         }
@@ -36,7 +43,7 @@ namespace Titanoboa
         public static MySqlCommand CreateSqlCommand()
         {
             MySqlCommand command = new MySqlCommand();
-            command.Connection = Program.Connection;
+            command.Connection = connection;
             return command;
         }
 

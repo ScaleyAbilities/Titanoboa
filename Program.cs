@@ -10,7 +10,6 @@ namespace Titanoboa
 {
     class Program
     {
-        internal static MySqlConnection Connection;
         internal static readonly string ServerName = "Titanoboa";
         internal static Logger Logger = null;
         internal static string CurrentCommand = null;

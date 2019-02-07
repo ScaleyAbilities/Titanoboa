@@ -40,7 +40,7 @@ namespace Titanoboa
 
             var bytesSent = skt.Send(msg);
             var bytesRecv = skt.Receive(bytes);
-            
+
             var msgRecv = Encoding.UTF8.GetString(bytes);
             var recv = msgRecv.Split(',');
 
@@ -51,7 +51,7 @@ namespace Titanoboa
             return amount;
         }
 
-        private static DateTime UnixTimeStampToDateTime( double unixTimeStamp )
+        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
             System.DateTime dtDateTime = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
