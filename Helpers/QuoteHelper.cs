@@ -1,6 +1,8 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
+using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
@@ -11,26 +13,25 @@ namespace Titanoboa
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
 
-        private static Socket skt;
-
-        public static bool Connect() {
-            // Got the follow lines of code from microsoft .Net documentation. Might not be best?
-            // https://docs.microsoft.com/en-us/dotnet/framework/network-programming/synchronous-client-socket-example
+        public static Socket AsyncConnect() {
+            //https://docs.microsoft.com/en-us/dotnet/framework/network-programming/asynchronous-client-socket-example
             try
             {
                 IPHostEntry ipHostInfo = Dns.GetHostEntry(quoteServer);
                 IPAddress ipAddress = ipHostInfo.AddressList[0];
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, quotePort);
 
-                skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Socket skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 skt.Connect(remoteEP);
+                Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
+
+                return skt;
             }
             catch (Exception e)
             {
                 Console.WriteLine("Unable to establish connection with Quote Server: {0}", e.ToString());
-                return false;
+                return null;
             }
-            return true;
         }
     }
 }
