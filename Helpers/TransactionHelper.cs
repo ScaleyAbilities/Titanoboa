@@ -191,12 +191,9 @@ namespace Titanoboa
             Program.Logger.LogTransaction(transaction);
         }
 
-        internal static decimal GetStockPrice(User user, string stockSymbol)
+        public static decimal GetStockPrice(User user, string stockSymbol)
         {
-            // TODO: Implement actual quote server
-            var price = 1.00m;
-            Program.Logger.LogQuoteServer(user, price, stockSymbol, DateTime.Now, "i'm a crypto key woohoo");
-            return price;
+            return QuoteHelper.GetQuote(user, stockSymbol);
         }
 
         public static Transaction GetTriggerTransaction(User user, string stockSymbol, string triggerType)
