@@ -47,6 +47,11 @@ namespace Titanoboa
             return command;
         }
 
+        public static MySqlTransaction StartTransaction()
+        {
+            return connection.BeginTransaction();
+        }
+
         public static int? ConvertToNullableInt32(object num)
         {
             return Convert.IsDBNull(num) || num == null ? null : (int?)Convert.ToInt32(num);
