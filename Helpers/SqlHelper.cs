@@ -1,21 +1,21 @@
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 
 namespace Titanoboa
 {
     public static class SqlHelper
     {
-        private static MySqlConnection connection;
+        private static NpgsqlConnection connection;
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
         private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
 
         public static void OpenSqlConnection()
         {
-            connection = new MySqlConnection(connectionString);
+            connection = new NpgsqlConnection(connectionString);
 
             var connected = false;
             while (!connected)
@@ -25,7 +25,7 @@ namespace Titanoboa
                     connection.Open();
                     connected = true;
                 }
-                catch (MySqlException ex)
+                catch (DbException ex)
                 {
                     Console.Error.WriteLine($"Unable to connect to Database, retrying... ({ex.Message})");
                     Thread.Sleep(3000);
@@ -40,14 +40,14 @@ namespace Titanoboa
             return true;
         }
 
-        public static MySqlCommand CreateSqlCommand()
+        public static NpgsqlCommand CreateSqlCommand()
         {
-            MySqlCommand command = new MySqlCommand();
+            NpgsqlCommand command = new NpgsqlCommand();
             command.Connection = connection;
             return command;
         }
 
-        public static MySqlTransaction StartTransaction()
+        public static NpgsqlTransaction StartTransaction()
         {
             return connection.BeginTransaction();
         }

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 
 namespace Titanoboa
 {
@@ -35,7 +35,7 @@ namespace Titanoboa
                 // Set up a logger for this unit of work
                 Logger = new Logger();
             }
-            catch (MySqlException ex)
+            catch (DbException ex)
             {
                 Console.Error.WriteLine($"Unable to create logger due to SQL error: {ex.Message}");
                 return;
@@ -112,7 +112,7 @@ namespace Titanoboa
                 {
                     error = $"Command '{CurrentCommand}' could not be run: {ex.Message}";
                 }
-                catch (MySqlException ex)
+                catch (DbException ex)
                 {
                     error = $"!!!SQL ERROR!!! {ex.Message}";
                 }

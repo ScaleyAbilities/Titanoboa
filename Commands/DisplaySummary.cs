@@ -1,7 +1,5 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Xml;
 

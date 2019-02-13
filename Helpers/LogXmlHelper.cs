@@ -1,10 +1,9 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Xml;
+using Npgsql;
 
 namespace Titanoboa
 {
@@ -102,14 +101,14 @@ namespace Titanoboa
             }
         }
 
-        private static void WriteRequiredValues(XmlWriter xmlWriter, MySqlDataReader reader)
+        private static void WriteRequiredValues(XmlWriter xmlWriter, NpgsqlDataReader reader)
         {
             xmlWriter.WriteElementString("timestamp", UnixTimestamp((DateTime)reader["timestamp"]));
             xmlWriter.WriteElementString("server", reader["server"].ToString());
             xmlWriter.WriteElementString("transactionNum", reader["workid"].ToString());
         }
 
-        private static void WriteCommonValues(XmlWriter xmlWriter, MySqlDataReader reader)
+        private static void WriteCommonValues(XmlWriter xmlWriter, NpgsqlDataReader reader)
         {
             xmlWriter.WriteElementString("command", reader["command"].ToString());
 
