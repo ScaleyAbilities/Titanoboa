@@ -50,10 +50,12 @@ namespace Titanoboa
                 var recv = msgRecv.Split(',');
 
                 amount = decimal.Parse(recv[0]);
+                var quoteStockSymbol = recv[1];
+                var quoteUserId = recv[2];
                 var timestamp = recv[3];
                 var cryptokey = recv[4];
 
-                Program.Logger.LogQuoteServer(user, amount, stockSymbol, timestamp, cryptokey);
+                Program.Logger.LogQuoteServer(user, amount, quoteStockSymbol, quoteUserId, timestamp, cryptokey);
             }
 
             quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(amount, DateTime.Now);

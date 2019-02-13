@@ -48,10 +48,14 @@ namespace Titanoboa
                             xmlWriter.WriteStartElement("quoteServer");
                             WriteRequiredValues(xmlWriter, reader);
 
-                            xmlWriter.WriteElementString("price", reader["amount"].ToString());
-                            xmlWriter.WriteElementString("stockSymbol", reader["stocksymbol"].ToString());
-                            xmlWriter.WriteElementString("username", reader["username"].ToString());
+
                             xmlWriter.WriteElementString("quoteServerTime", reader["quoteservertime"].ToString());
+
+                            // NOTE: username is stored in the message field for responses from quote server
+                            xmlWriter.WriteElementString("username", reader["message"].ToString());
+                            
+                            xmlWriter.WriteElementString("stockSymbol", reader["stocksymbol"].ToString());
+                            xmlWriter.WriteElementString("price", reader["amount"].ToString());
                             xmlWriter.WriteElementString("cryptokey", reader["cryptokey"].ToString());
 
                             xmlWriter.WriteEndElement();
