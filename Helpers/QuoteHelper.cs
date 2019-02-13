@@ -46,7 +46,7 @@ namespace Titanoboa
                 var bytesSent = skt.Send(msg);
                 var bytesRecv = skt.Receive(bytes);
 
-                var msgRecv = Encoding.UTF8.GetString(bytes).Replace("\0", string.Empty);
+                var msgRecv = Encoding.UTF8.GetString(bytes).Replace("\0", string.Empty).Trim();
                 var recv = msgRecv.Split(',');
 
                 amount = decimal.Parse(recv[0]);
