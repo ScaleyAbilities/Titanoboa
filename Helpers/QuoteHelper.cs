@@ -41,7 +41,7 @@ namespace Titanoboa
                 Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
 
                 var bytes = new byte[1024];
-                var msg = Encoding.ASCII.GetBytes($"{user.Username},{stockSymbol}\n");
+                var msg = Encoding.ASCII.GetBytes($"{stockSymbol},{user.Username}\n");
 
                 var bytesSent = skt.Send(msg);
                 var bytesRecv = skt.Receive(bytes);
