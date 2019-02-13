@@ -10,7 +10,7 @@ namespace Titanoboa
 {
     class Program
     {
-        internal static readonly string ServerName = "Titanoboa";
+        internal static readonly string ServerName = Environment.GetEnvironmentVariable("SERVER_NAME") ?? "Titanoboa";
         internal static Logger Logger = null;
         internal static string CurrentCommand = null;
 
