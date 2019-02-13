@@ -7,15 +7,17 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static class QuoteHelper
+    public class QuoteHelper
     {
         // Quote server port number
         private const int quotePort = 4448;
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
         private static bool usingQuoteSrv = Environment.GetEnvironmentVariable("USING_QUOTE_SRV") == "TRUE" ? true : false;
-        private static Socket skt;
-        static QuoteHelper() {
+        private Socket skt;
+
+        // TODO: clean this up
+        public QuoteHelper() {
             if(!usingQuoteSrv)
                 return;
 
@@ -35,7 +37,7 @@ namespace Titanoboa
             }
         }
 
-        public static decimal GetQuote(User user, string stockSymbol){
+        public decimal GetQuote(User user, string stockSymbol){
             if(!usingQuoteSrv) 
                 return 10.00m;
 
@@ -53,6 +55,11 @@ namespace Titanoboa
             var cryptokey = recv[4];
             Program.Logger.LogQuoteServer(user, amount, stockSymbol, timestamp, cryptokey);
             return amount;
+        }
+
+        public void EndConnection()
+        {
+            skt.Close();
         }
 
         private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
