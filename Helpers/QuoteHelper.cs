@@ -2,64 +2,63 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public class QuoteHelper
+    public static class QuoteHelper
     {
         // Quote server port number
         private const int quotePort = 4448;
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
+
+        private static Dictionary<string, Tuple<decimal, DateTime>> quoteCache = new Dictionary<string, Tuple<decimal, DateTime>>();
+
         private static bool usingQuoteSrv = Environment.GetEnvironmentVariable("USING_QUOTE_SRV") == "TRUE" ? true : false;
-        private Socket skt;
 
-        // TODO: clean this up
-        public QuoteHelper() {
+        public static decimal GetQuote(User user, string stockSymbol){
             if(!usingQuoteSrv)
-                return;
-
-            try
-            {
-                IPHostEntry ipHostInfo = Dns.GetHostEntry(quoteServer);
-                IPAddress ipAddress = ipHostInfo.AddressList[0];
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, quotePort);
-
-                skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                skt.Connect(remoteEP);
-                Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Unable to establish connection with Quote Server: {0}", e.ToString());
-            }
-        }
-
-        public decimal GetQuote(User user, string stockSymbol){
-            if(!usingQuoteSrv) 
                 return 10.00m;
 
-            var bytes = new byte[1024];
-            var msg = Encoding.ASCII.GetBytes($"{user},{stockSymbol}\n");
+            Tuple<decimal, DateTime> cachedQuote = null;
+            quoteCache.TryGetValue(stockSymbol, out cachedQuote);
 
-            var bytesSent = skt.Send(msg);
-            var bytesRecv = skt.Receive(bytes);
+            if (cachedQuote != null && cachedQuote.Item2.AddMinutes(1) >= DateTime.Now)
+                return cachedQuote.Item1;
 
-            var msgRecv = Encoding.UTF8.GetString(bytes);
-            var recv = msgRecv.Split(',');
+            var ipHostInfo = Dns.GetHostEntry(quoteServer);
+            var ipAddress = ipHostInfo.AddressList[0];
+            var RemoteEndPoint = new IPEndPoint(ipAddress, quotePort);
 
-            var amount = decimal.Parse(recv[0]);
-            var timestamp = UnixTimeStampToDateTime(double.Parse(recv[3]) / 1000);
-            var cryptokey = recv[4];
-            Program.Logger.LogQuoteServer(user, amount, stockSymbol, timestamp, cryptokey);
+            decimal amount;
+
+            using (var skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
+            {
+                skt.Connect(RemoteEndPoint);
+                Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
+
+                var bytes = new byte[1024];
+                var msg = Encoding.ASCII.GetBytes($"{user},{stockSymbol}\n");
+
+                var bytesSent = skt.Send(msg);
+                var bytesRecv = skt.Receive(bytes);
+
+                var msgRecv = Encoding.UTF8.GetString(bytes).Replace("\0", string.Empty);
+                var recv = msgRecv.Split(',');
+
+                amount = decimal.Parse(recv[0]);
+                var timestamp = UnixTimeStampToDateTime(double.Parse(recv[3]) / 1000);
+                var cryptokey = recv[4];
+
+                Program.Logger.LogQuoteServer(user, amount, stockSymbol, timestamp, cryptokey);
+            }
+
+            quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(amount, DateTime.Now);
+            
             return amount;
-        }
-
-        public void EndConnection()
-        {
-            skt.Close();
         }
 
         private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
