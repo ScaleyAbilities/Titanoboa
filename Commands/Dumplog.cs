@@ -24,6 +24,11 @@ namespace Titanoboa
         {
             ParamHelper.ValidateParamsExist(commandParams, "filename");
 
+            while (Logger.RunningThreads > 0)
+            {
+                System.Threading.Thread.Sleep(10);
+            }
+
             var filename = (string)commandParams["filename"];
 
             if (!string.IsNullOrEmpty(username))

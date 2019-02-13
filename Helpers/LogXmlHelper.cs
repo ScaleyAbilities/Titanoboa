@@ -51,10 +51,11 @@ namespace Titanoboa
 
                             xmlWriter.WriteElementString("quoteServerTime", reader["quoteservertime"].ToString());
 
-                            // NOTE: username is stored in the message field for responses from quote server
-                            xmlWriter.WriteElementString("username", reader["message"].ToString());
+                            // NOTE: The quote server mixes up username and stock symbol.
+                            //       Also we store the returned username in the message column
+                            xmlWriter.WriteElementString("stockSymbol", reader["message"].ToString());
+                            xmlWriter.WriteElementString("username", reader["stocksymbol"].ToString());
                             
-                            xmlWriter.WriteElementString("stockSymbol", reader["stocksymbol"].ToString());
                             xmlWriter.WriteElementString("price", reader["amount"].ToString());
                             xmlWriter.WriteElementString("cryptokey", reader["cryptokey"].ToString());
 

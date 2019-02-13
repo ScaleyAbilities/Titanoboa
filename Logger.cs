@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading;
+using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 
 namespace Titanoboa
@@ -18,6 +19,8 @@ namespace Titanoboa
         private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;Allow User Variables=True";
         private static MySqlConnection connection = new MySqlConnection(connectionString);
         private static Mutex sqlMutex = new Mutex();
+
+        public static int RunningThreads = 0;
 
 
         private ulong workId;
@@ -106,15 +109,18 @@ namespace Titanoboa
             if (insertNum <= 0)
                 return;
 
-            var thread = new Thread(() => {
+            Thread thread = null;
+            thread = new Thread(() => {
                 fullCommand.Connection = connection;
                 fullCommand.CommandText = fullCommandText.ToString();
                 fullCommand.Prepare();
 
                 sqlMutex.WaitOne();
                 fullCommand.ExecuteNonQuery();
+                RunningThreads--;
                 sqlMutex.ReleaseMutex();
             });
+            RunningThreads++;
             thread.Start();
         }
     }
