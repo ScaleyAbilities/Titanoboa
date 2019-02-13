@@ -20,7 +20,7 @@ namespace Titanoboa
         private static MySqlConnection connection = new MySqlConnection(connectionString);
         private static Mutex sqlMutex = new Mutex();
 
-        public static int RunningThreads = 0;
+        private static int runningThreads = 0;
 
 
         private ulong workId;
@@ -29,6 +29,7 @@ namespace Titanoboa
         // We use a StringBuilder to build up the command since it's faster than using += on a string
         private StringBuilder fullCommandText = new StringBuilder();
         private int insertNum = 0;
+        private bool committed = false;
 
         static Logger()
         {
@@ -106,7 +107,7 @@ namespace Titanoboa
 
         public void CommitLogs()
         {
-            if (insertNum <= 0)
+            if (insertNum <= 0 || committed)
                 return;
 
             Thread thread = null;
@@ -117,11 +118,21 @@ namespace Titanoboa
 
                 sqlMutex.WaitOne();
                 fullCommand.ExecuteNonQuery();
-                RunningThreads--;
+                runningThreads--;
                 sqlMutex.ReleaseMutex();
             });
-            RunningThreads++;
+            runningThreads++;
             thread.Start();
+
+            committed = true;
+        }
+
+        public static void WaitForTasks()
+        {
+            while (runningThreads > 0)
+            {
+                System.Threading.Thread.Sleep(10);
+            }
         }
     }
 }

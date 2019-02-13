@@ -24,22 +24,21 @@ namespace Titanoboa
         {
             ParamHelper.ValidateParamsExist(commandParams, "filename");
 
-            while (Logger.RunningThreads > 0)
-            {
-                System.Threading.Thread.Sleep(10);
-            }
-
             var filename = (string)commandParams["filename"];
 
             if (!string.IsNullOrEmpty(username))
             {
                 var user = TransactionHelper.GetUser(username);
                 Program.Logger.LogCommand(user, null, null, filename);
+                Program.Logger.CommitLogs();
+                Logger.WaitForTasks();
                 LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
                 Program.Logger.LogCommand(null, null, null, filename);
+                Program.Logger.CommitLogs();
+                Logger.WaitForTasks();
                 LogXmlHelper.CreateLog(filename);
             }
         }
