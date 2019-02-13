@@ -50,7 +50,7 @@ namespace Titanoboa
                 var recv = msgRecv.Split(',');
 
                 amount = decimal.Parse(recv[0]);
-                var timestamp = UnixTimeStampToDateTime(double.Parse(recv[3]) / 1000);
+                var timestamp = recv[3];
                 var cryptokey = recv[4];
 
                 Program.Logger.LogQuoteServer(user, amount, stockSymbol, timestamp, cryptokey);
@@ -59,14 +59,6 @@ namespace Titanoboa
             quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(amount, DateTime.Now);
             
             return amount;
-        }
-
-        private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
-        {
-            // Unix timestamp is seconds past epoch
-            System.DateTime dtDateTime = new DateTime(1970,1,1,0,0,0,0,System.DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds( unixTimeStamp ).ToLocalTime();
-            return dtDateTime;
         }
     }
 }

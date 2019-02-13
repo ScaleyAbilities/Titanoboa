@@ -51,7 +51,7 @@ namespace Titanoboa
                             xmlWriter.WriteElementString("price", reader["amount"].ToString());
                             xmlWriter.WriteElementString("stockSymbol", reader["stocksymbol"].ToString());
                             xmlWriter.WriteElementString("username", reader["username"].ToString());
-                            xmlWriter.WriteElementString("quoteServerTime", UnixTimestamp((DateTime)reader["quoteservertime"]));
+                            xmlWriter.WriteElementString("quoteServerTime", reader["quoteservertime"].ToString());
                             xmlWriter.WriteElementString("cryptokey", reader["cryptokey"].ToString());
 
                             xmlWriter.WriteEndElement();

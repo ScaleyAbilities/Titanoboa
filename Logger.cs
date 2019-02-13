@@ -53,7 +53,7 @@ namespace Titanoboa
             insertNum++;
         }
 
-        public void LogQuoteServer(User user, decimal? amount, string stockSymbol, DateTime quoteServerTime, string cryptoKey)
+        public void LogQuoteServer(User user, decimal? amount, string stockSymbol, string quoteServerTime, string cryptoKey)
         {
             fullCommandText.Append($@"INSERT INTO logs (logtype, server, workid, userid, amount, stocksymbol, quoteservertime, cryptokey)
                                       VALUES ('quote', @server, @workid, @userid{insertNum}, @amount{insertNum},
