@@ -45,20 +45,16 @@ namespace Titanoboa
                             break;
                         
                         case "quote":
-                            // Not logging quote server since their validator is broken
-                            break;
-
                             xmlWriter.WriteStartElement("quoteServer");
                             WriteRequiredValues(xmlWriter, reader);
 
 
                             xmlWriter.WriteElementString("quoteServerTime", reader["quoteservertime"].ToString());
 
-                            // NOTE: The quote server mixes up username and stock symbol.
-                            //       Also we store the returned username in the message column
-                            xmlWriter.WriteElementString("stockSymbol", reader["message"].ToString());
-                            xmlWriter.WriteElementString("username", reader["stocksymbol"].ToString());
+                            // NOTE: We store the returned username in the message column
+                            xmlWriter.WriteElementString("username", reader["message"].ToString());
 
+                            xmlWriter.WriteElementString("stockSymbol", reader["stocksymbol"].ToString());
                             xmlWriter.WriteElementString("price", reader["amount"].ToString());
                             xmlWriter.WriteElementString("cryptokey", reader["cryptokey"].ToString());
 

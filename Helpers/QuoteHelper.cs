@@ -52,8 +52,8 @@ namespace Titanoboa
                 Console.WriteLine($"Quote Server Message: {msgRecv}");
 
                 amount = decimal.Parse(recv[0]);
-                var quoteStockSymbol = recv[2];
-                var quoteUserId = recv[1];
+                var quoteStockSymbol = recv[1];
+                var quoteUserId = recv[2];
                 var timestamp = recv[3];
                 var cryptokey = recv[4];
 
