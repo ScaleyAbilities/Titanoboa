@@ -10,8 +10,7 @@ namespace Titanoboa
 {
     class Program
     {
-        internal static MySqlConnection Connection;
-        internal static readonly string ServerName = "Titanoboa";
+        internal static readonly string ServerName = Environment.GetEnvironmentVariable("SERVER_NAME") ?? "Titanoboa";
         internal static Logger Logger = null;
         internal static string CurrentCommand = null;
 
@@ -42,82 +41,94 @@ namespace Titanoboa
                 return;
             }
 
-            try 
+            using (var transaction = SqlHelper.StartTransaction())
             {
-                switch (CurrentCommand)
+                string error = null;
+                try 
                 {
-                    case "QUOTE":
-                        Commands.Quote(username, commandParams);
-                        break;
-                    case "ADD":
-                        Commands.Add(username, commandParams);
-                        break;
-                    case "BUY":
-                        Commands.Buy(username, commandParams);
-                        break;
-                    case "COMMIT_BUY":
-                        Commands.CommitBuy(username);
-                        break;
-                    case "CANCEL_BUY":
-                        Commands.CancelBuy(username);
-                        break;
-                    case "SELL":
-                        Commands.Sell(username, commandParams);
-                        break;
-                    case "COMMIT_SELL":
-                        Commands.CommitSell(username);
-                        break;
-                    case "CANCEL_SELL":
-                        Commands.CancelSell(username);
-                        break;
-                    case "SET_BUY_AMOUNT":
-                        Commands.SetBuyAmount(username, commandParams);
-                        break;
-                    case "SET_BUY_TRIGGER":
-                        Commands.SetBuyTrigger(username, commandParams);
-                        break;
-                    case "CANCEL_SET_BUY":
-                        Commands.CancelSetBuy(username, commandParams);
-                        break;
-                    case "SET_SELL_AMOUNT":
-                        Commands.SetSellAmount(username, commandParams);
-                        break;
-                    case "SET_SELL_TRIGGER":
-                        Commands.SetSellTrigger(username, commandParams);
-                        break;
-                    case "CANCEL_SET_SELL":
-                        Commands.CancelSetSell(username, commandParams);
-                        break;
-                    case "DUMPLOG":
-                        Commands.Dumplog(username, commandParams);
-                        break;
-                    case "DISPLAY_SUMMARY":
-                        Commands.DisplaySummary(username);
-                        break;
-                    default:
-                        Console.Error.WriteLine($"Unknown command '{CurrentCommand}'");
-                        break;
+                    switch (CurrentCommand)
+                    {
+                        case "QUOTE":
+                            Commands.Quote(username, commandParams);
+                            break;
+                        case "ADD":
+                            Commands.Add(username, commandParams);
+                            break;
+                        case "BUY":
+                            Commands.Buy(username, commandParams);
+                            break;
+                        case "COMMIT_BUY":
+                            Commands.CommitBuy(username);
+                            break;
+                        case "CANCEL_BUY":
+                            Commands.CancelBuy(username);
+                            break;
+                        case "SELL":
+                            Commands.Sell(username, commandParams);
+                            break;
+                        case "COMMIT_SELL":
+                            Commands.CommitSell(username);
+                            break;
+                        case "CANCEL_SELL":
+                            Commands.CancelSell(username);
+                            break;
+                        case "SET_BUY_AMOUNT":
+                            Commands.SetBuyAmount(username, commandParams);
+                            break;
+                        case "SET_BUY_TRIGGER":
+                            Commands.SetBuyTrigger(username, commandParams);
+                            break;
+                        case "CANCEL_SET_BUY":
+                            Commands.CancelSetBuy(username, commandParams);
+                            break;
+                        case "SET_SELL_AMOUNT":
+                            Commands.SetSellAmount(username, commandParams);
+                            break;
+                        case "SET_SELL_TRIGGER":
+                            Commands.SetSellTrigger(username, commandParams);
+                            break;
+                        case "CANCEL_SET_SELL":
+                            Commands.CancelSetSell(username, commandParams);
+                            break;
+                        case "DUMPLOG":
+                            Commands.Dumplog(username, commandParams);
+                            break;
+                        case "DISPLAY_SUMMARY":
+                            Commands.DisplaySummary(username);
+                            break;
+                        default:
+                            Console.Error.WriteLine($"Unknown command '{CurrentCommand}'");
+                            break;
+                    }
+
+                    Logger.CommitLogs();
+                    transaction.Commit();
                 }
-            }
-            catch (ArgumentException ex)
-            {
-                Console.Error.WriteLine($"Invalid parameters for command '{CurrentCommand}': {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                Console.Error.WriteLine($"Command '{CurrentCommand}' could not be run: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, ex.Message);
-            }
-            catch (MySqlException ex)
-            {
-                Console.Error.WriteLine($"Command '{CurrentCommand}' encountered a SQL error: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, $"SQL ERROR!!! {ex.Message}");
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Command '{CurrentCommand}' encountered an unexpected error: {ex.Message}");
-                Logger.LogEvent(Logger.EventType.Error, $"UNEXPECTED ERROR!!! {ex.Message}");
+                catch (ArgumentException ex)
+                {
+                    error = $"Invalid parameters for command '{CurrentCommand}': {ex.Message}";
+                }
+                catch (InvalidOperationException ex)
+                {
+                    error = $"Command '{CurrentCommand}' could not be run: {ex.Message}";
+                }
+                catch (MySqlException ex)
+                {
+                    error = $"!!!SQL ERROR!!! {ex.Message}";
+                }
+                catch (Exception ex)
+                {
+                    error = $"!!!UNEXPECTED ERROR!!! {ex.Message}";
+                }
+
+                if (error != null)
+                {
+                    Console.Error.WriteLine(error);
+                    transaction.Rollback();
+                    Logger = new Logger();
+                    Logger.LogEvent(Logger.EventType.Error, error);
+                    Logger.CommitLogs();
+                }
             }
 
             // Clear the logger now that we are done this unit of work

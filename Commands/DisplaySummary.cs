@@ -18,9 +18,8 @@ namespace Titanoboa
         public static void DisplaySummary(string username)
         {
             // TODO: this
-            return;
             var user = TransactionHelper.GetUser(username);
-            decimal? balance = user.PendingBalance;
+            Program.Logger.LogCommand(user);
         }
     }
 }

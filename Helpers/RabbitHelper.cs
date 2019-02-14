@@ -37,7 +37,7 @@ namespace Titanoboa
                     rabbitConnection = factory.CreateConnection();
                     connected = true;
                 }
-                catch (BrokerUnreachableException ex)
+                catch (BrokerUnreachableException)
                 {
                     Console.Error.WriteLine("Unable to connect to Rabbit, retrying...");
                     Thread.Sleep(3000);
