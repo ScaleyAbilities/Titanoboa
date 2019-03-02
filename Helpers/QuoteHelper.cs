@@ -19,25 +19,43 @@ namespace Titanoboa
 
         private static bool usingQuoteSrv = Environment.GetEnvironmentVariable("USING_QUOTE_SRV") == "TRUE" ? true : false;
 
-        public static decimal GetQuote(User user, string stockSymbol){
+        public static decimal GetQuote(User user, string stockSymbol) {
             if(!usingQuoteSrv)
                 return 10.00m;
 
-            Tuple<decimal, DateTime> cachedQuote = null;
-            quoteCache.TryGetValue(stockSymbol, out cachedQuote);
-
-            if (cachedQuote != null && cachedQuote.Item2.AddMinutes(1) >= DateTime.Now)
-                return cachedQuote.Item1;
-
             var ipHostInfo = Dns.GetHostEntry(quoteServer);
             var ipAddress = ipHostInfo.AddressList[0];
-            var RemoteEndPoint = new IPEndPoint(ipAddress, quotePort);
+            var remoteEndPoint = new IPEndPoint(ipAddress, quotePort);
+            
+            Tuple<decimal, DateTime> cachedQuote = null;
+            quoteCache.TryGetValue(stockSymbol, out cachedQuote);
+            
+            if (cachedQuote == null) {
+                Console.WriteLine($"Quote Cache Miss: {stockSymbol}");
+                var amount = GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint);
+                return amount;
+            }
 
+            if (cachedQuote.Item2.AddMinutes(1) <= DateTime.Now) {
+                Thread thread = null;
+                thread = new Thread(() => {
+                    GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint);
+                });
+
+                quoteCache[stockSymbol].Item2 = DateTime.Now;
+                thread.Start();
+            }
+
+            return cachedQuote.Item1;
+        }
+        
+        private static decimal GetQuoteFromQuoteServer(User user, string stockSymbol, IPHostEntry ipHostInfo, IPAddress ipAddress, IPEndPoint remoteEndPoint)
+        {
             decimal amount;
-
+            
             using (var skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
             {
-                skt.Connect(RemoteEndPoint);
+                skt.Connect(remoteEndPoint);
                 Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
 
                 var bytes = new byte[1024];
@@ -57,11 +75,12 @@ namespace Titanoboa
                 var timestamp = recv[3];
                 var cryptokey = recv[4];
 
-                Program.Logger.LogQuoteServer(user, amount, quoteStockSymbol, quoteUserId, timestamp, cryptokey);
+                var logger = new Logger();
+                logger.LogQuoteServer(user, amount, quoteStockSymbol, quoteUserId, timestamp, cryptokey);
+                logger.CommitLogs();
             }
 
             quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(amount, DateTime.Now);
-            
             return amount;
         }
     }
