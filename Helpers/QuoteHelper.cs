@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -42,7 +43,7 @@ namespace Titanoboa
                     GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint);
                 });
 
-                quoteCache[stockSymbol].Item2 = DateTime.Now;
+                quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(quoteCache[stockSymbol].Item1, DateTime.Now);
                 thread.Start();
             }
 
