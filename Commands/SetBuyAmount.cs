@@ -3,19 +3,19 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void SetBuyAmount(string username, JObject commandParams)
+        public void SetBuyAmount()
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username, true);
+            var user = databaseHelper.GetUser(username, true);
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            Program.Logger.LogCommand(user, amount, stockSymbol);
+            logger.LogCommand(user, amount, stockSymbol);
             
             // Not enough funds for trigger
             if (user.PendingBalance < amount)
@@ -25,18 +25,18 @@ namespace Titanoboa
 
             // Reserve funds for trigger
             var newBalance = user.Balance - amount;
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
+            databaseHelper.UpdateUserBalance(ref user, newBalance);
 
             // Check if existing trigger exists and update amount, else create new trigger
-            Transaction buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            Transaction buyTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (buyTrigger != null)
             {
                 var newAmount = buyTrigger.BalanceChange + amount;
-                TransactionHelper.SetTransactionBalanceChange(ref buyTrigger, newAmount);
+                databaseHelper.SetTransactionBalanceChange(ref buyTrigger, newAmount);
             }
             else
             {
-                buyTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
+                buyTrigger = databaseHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
             }
         }
     }

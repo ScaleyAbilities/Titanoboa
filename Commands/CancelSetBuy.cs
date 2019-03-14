@@ -2,31 +2,31 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void CancelSetBuy(string username, JObject commandParams) {
-            ParamHelper.ValidateParamsExist(commandParams, "stock");
+        public void CancelSetBuy() {
+            CheckParams("stock");
 
             // Unpack JObject
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get user
-            var user = TransactionHelper.GetUser(username);
+            var user = databaseHelper.GetUser(username);
 
-            Program.Logger.LogCommand(user, null, stockSymbol);
+            logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
-            var existingSetBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            var existingSetBuyTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (existingSetBuyTrigger != null)
             {
                 var refund = existingSetBuyTrigger.BalanceChange;
 
                 // Refund user
                 var newBalance = user.Balance + refund;
-                TransactionHelper.UpdateUserBalance(ref user, newBalance);
+                databaseHelper.UpdateUserBalance(ref user, newBalance);
 
                 // Cancel transaction
-                TransactionHelper.DeleteTransaction(existingSetBuyTrigger);
+                databaseHelper.DeleteTransaction(existingSetBuyTrigger);
             }
             
         }
