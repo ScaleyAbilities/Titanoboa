@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class Commands
     {
         /*
             Set Sell Trigger command flow:
@@ -13,7 +13,7 @@ namespace Titanoboa
             3- Calculate stock amount to be sold (only whole stocks, based on user amount and stock price)
             3- Update number of stocks in transactions table
          */
-        public static void SetSellTrigger(string username, JObject commandParams) 
+        public void SetSellTrigger(string username, JObject commandParams) 
         {
             ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
@@ -22,12 +22,12 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var user = TransactionHelper.GetUser(username, true);
+            var user = databaseHelper.GetUser(username, true);
 
             Program.Logger.LogCommand(user, sellPrice, stockSymbol);
 
             // Get the existing trigger to find amount in $$ the user wants to sell of their stock
-            var existingTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingTrigger == null)
             {
                 throw new InvalidOperationException("No existing trigger");
@@ -41,7 +41,7 @@ namespace Titanoboa
             }
 
             // Check if they have enough to sell
-            var userStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
+            var userStockAmount = databaseHelper.GetStocks(user, stockSymbol, true);
             var numStockToSell = (int)Math.Floor(sellAmount / sellPrice);
             if (userStockAmount < numStockToSell)
             {
@@ -51,9 +51,9 @@ namespace Titanoboa
             // Subtract stocks from user account
             // any extra $$ will be refunded upon trigger point being hit / cancel trigger events
             var newUserStockAmount = userStockAmount - numStockToSell;
-            TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
+            databaseHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
 
-            TransactionHelper.SetTransactionStockPrice(ref existingTrigger, sellPrice);
+            databaseHelper.SetTransactionStockPrice(ref existingTrigger, sellPrice);
         } 
     }
 }

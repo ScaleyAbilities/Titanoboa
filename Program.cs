@@ -41,60 +41,62 @@ namespace Titanoboa
                 return;
             }
 
-            using (var transaction = SqlHelper.StartTransaction())
+            using (var connection = SqlHelper.GetConnection())
+            using (var dbHelper = new DatabaseHelper(connection))
             {
                 string error = null;
+                var commands = new Commands(dbHelper);
                 try 
                 {
                     switch (CurrentCommand)
                     {
                         case "QUOTE":
-                            Commands.Quote(username, commandParams);
+                            commands.Quote(username, commandParams);
                             break;
                         case "ADD":
-                            Commands.Add(username, commandParams);
+                            commands.Add(username, commandParams);
                             break;
                         case "BUY":
-                            Commands.Buy(username, commandParams);
+                            commands.Buy(username, commandParams);
                             break;
                         case "COMMIT_BUY":
-                            Commands.CommitBuy(username);
+                            commands.CommitBuy(username);
                             break;
                         case "CANCEL_BUY":
-                            Commands.CancelBuy(username);
+                            commands.CancelBuy(username);
                             break;
                         case "SELL":
-                            Commands.Sell(username, commandParams);
+                            commands.Sell(username, commandParams);
                             break;
                         case "COMMIT_SELL":
-                            Commands.CommitSell(username);
+                            commands.CommitSell(username);
                             break;
                         case "CANCEL_SELL":
-                            Commands.CancelSell(username);
+                            commands.CancelSell(username);
                             break;
                         case "SET_BUY_AMOUNT":
-                            Commands.SetBuyAmount(username, commandParams);
+                            commands.SetBuyAmount(username, commandParams);
                             break;
                         case "SET_BUY_TRIGGER":
-                            Commands.SetBuyTrigger(username, commandParams);
+                            commands.SetBuyTrigger(username, commandParams);
                             break;
                         case "CANCEL_SET_BUY":
-                            Commands.CancelSetBuy(username, commandParams);
+                            commands.CancelSetBuy(username, commandParams);
                             break;
                         case "SET_SELL_AMOUNT":
-                            Commands.SetSellAmount(username, commandParams);
+                            commands.SetSellAmount(username, commandParams);
                             break;
                         case "SET_SELL_TRIGGER":
-                            Commands.SetSellTrigger(username, commandParams);
+                            commands.SetSellTrigger(username, commandParams);
                             break;
                         case "CANCEL_SET_SELL":
-                            Commands.CancelSetSell(username, commandParams);
+                            commands.CancelSetSell(username, commandParams);
                             break;
                         case "DUMPLOG":
-                            Commands.Dumplog(username, commandParams);
+                            commands.Dumplog(username, commandParams);
                             break;
                         case "DISPLAY_SUMMARY":
-                            Commands.DisplaySummary(username);
+                            commands.DisplaySummary(username);
                             break;
                         default:
                             Console.Error.WriteLine($"Unknown command '{CurrentCommand}'");
@@ -102,7 +104,7 @@ namespace Titanoboa
                     }
 
                     Logger.CommitLogs();
-                    transaction.Commit();
+                    dbHelper.CommitAllChanges();
                 }
                 catch (ArgumentException ex)
                 {
@@ -124,7 +126,7 @@ namespace Titanoboa
                 if (error != null)
                 {
                     Console.Error.WriteLine(error);
-                    transaction.Rollback();
+                    dbHelper.RollbackAllChanges();
                     Logger = new Logger();
                     Logger.LogEvent(Logger.EventType.Error, error);
                     Logger.CommitLogs();
@@ -138,7 +140,6 @@ namespace Titanoboa
 
         static async Task Main(string[] args)
         {
-            SqlHelper.OpenSqlConnection();
             RabbitHelper.CreateConsumer(RunCommands);
             
             Console.WriteLine("Titanoboa running...");
@@ -155,9 +156,6 @@ namespace Titanoboa
                 Console.WriteLine("Press [enter] to exit.");
                 Console.ReadLine();
             }
-
-            //Close connection
-            SqlHelper.CloseSqlConnection();
         }
     }
 }
