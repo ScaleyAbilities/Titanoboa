@@ -12,7 +12,7 @@ namespace Titanoboa
             ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username, true);
+            var user = TransactionHelper.GetUser(username);
             var committedSellPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
@@ -20,7 +20,7 @@ namespace Titanoboa
             Program.Logger.LogCommand(user, committedSellPrice, stockSymbol);
 
             // Can't have sell price of 0
-            if (committedSellPrice == 0)
+            if (committedSellPrice <= 0)
             {
                 throw new InvalidOperationException("Can't have a sell price of 0.");
             }
@@ -49,7 +49,7 @@ namespace Titanoboa
             // Calculate + update new user balance
             var moneyMade = committedSellPrice * numStocksToSell;
             var newUserBalance = user.Balance + moneyMade;
-            TransactionHelper.UpdateUserBalance(ref user, moneyMade);
+            TransactionHelper.UpdateUserBalance(ref user, newUserBalance);
     
             // Set transaction StockAmount and StockPrice, mark as completed
             TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, committedSellPrice);

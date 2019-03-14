@@ -38,20 +38,20 @@ namespace Titanoboa
             var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSellTrigger == null)
             {
-                throw new InvalidOperationException("Can't set trigger: No existing trigger");
+                throw new InvalidOperationException("Can't set SELL_TRIGGER: No existing trigger");
             }
 
             // Make sure the trigger stock price or stock amount hasn't already been set
             if (existingSellTrigger.StockPrice != null || existingSellTrigger.StockAmount != null)
             {
-                throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
+                throw new InvalidOperationException("Can't set SELL_TRIGGER: Trigger was already set!");
             }
 
             // Find amount in $$ the user wants to sell of their stock
             var sellAmountInDollars = existingSellTrigger.BalanceChange;
-            if (sellAmountInDollars == 0)
+            if (sellAmountInDollars <= 0)
             {
-                throw new InvalidOperationException("Can't set trigger: Trigger dollars amount was never set!");
+                throw new InvalidOperationException("Can't set SELL_TRIGGER: Trigger dollars amount was never set!");
             }
 
             // Make sure the price isn't higher than the amount they want to sell

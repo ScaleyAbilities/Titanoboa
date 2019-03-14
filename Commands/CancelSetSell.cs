@@ -8,6 +8,7 @@ namespace Titanoboa
     {
         public static void CancelSetSell(string username, JObject commandParams)
         {
+            // Sanity check
             ParamHelper.ValidateParamsExist(commandParams, "stock");
 
             // Get params
@@ -25,7 +26,7 @@ namespace Titanoboa
             }
             else if (existingSellTrigger.Type == "completed")
             {
-                throw new InvalidOperationException("Can't commit SELL_TRIGGER: Trigger has already gone through!");
+                throw new InvalidOperationException("Can't cancel SELL_TRIGGER: Trigger has already gone through!");
             }
 
             // Cancel transaction

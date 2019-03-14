@@ -10,7 +10,7 @@ namespace Titanoboa
             // Sanity check
             ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
 
-            // Unpack JObject
+            // Get params
             var user = TransactionHelper.GetUser(username, true);
             var sellAmountInDollars = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
@@ -36,7 +36,7 @@ namespace Titanoboa
             else
             {
                 // Create transaction with stockAmount = null, stockPrice = null
-                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", sellAmountInDollars, null, null, "trigger");
+                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", sellAmountInDollars, null, null, "pending");
             }
         }
     }
