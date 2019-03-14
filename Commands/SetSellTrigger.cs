@@ -23,7 +23,7 @@ namespace Titanoboa
             var sellPrice = (decimal)commandParams["price"];
             if (sellPrice == 0)
             {
-                throw new InvalidOperationException("Can't have a buy price of 0.");
+                throw new InvalidOperationException("Can't have a sell price of 0.");
             }
             var stockSymbol = commandParams["stock"].ToString();
 
@@ -72,30 +72,25 @@ namespace Titanoboa
             twigTrigger.StockSymbol = existingSellTrigger.StockSymbol;
             twigTrigger.StockPrice = sellPrice;
 
-            // TODO: Push twigTrigger to Rabbit Q
+            // Push twigTrigger to Rabbit Q
+            RabbitHelper.PushCommand(twigTrigger);
 
-            if (true) // TODO: IF ACK
-            {
-                var numStockToSell = (int)Math.Floor(sellAmountInDollars / sellPrice);
-                var userStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
+            // Calculate whole num of stocks to be sold
+            var numStockToSell = (int)Math.Floor(sellAmountInDollars / sellPrice);
+            var userStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
 
-                // Subtract stocks from user account
-                // any extra $$ will be refunded upon trigger point being hit / cancel trigger events
-                var newUserStockAmount = userStockAmount - numStockToSell;
+            // Subtract stocks from user account
+            // any extra $$ will be refunded upon trigger point being hit / cancel trigger events
+            var newUserStockAmount = userStockAmount - numStockToSell;
 
-                // Just sell all stocks if they don't have enough
-                newUserStockAmount = (newUserStockAmount < 0) ? 0 : newUserStockAmount;
+            // Just sell all stocks if they don't have enough
+            newUserStockAmount = (newUserStockAmount < 0) ? 0 : newUserStockAmount;
 
-                // Update the user amonut of stock
-                TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
+            // Update the user amonut of stock
+            TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
 
-                // Update the selling price
-                TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, sellPrice);
-            }
-            else
-            {
-                throw new InvalidProgramException("The SELL_TRIGGER that is trying to be set already exist in trigger server, but not in the database!");
-            }
+            // Update the selling price
+            TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, sellPrice);
         }
     }
 }

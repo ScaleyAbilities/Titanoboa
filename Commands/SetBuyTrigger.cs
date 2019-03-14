@@ -59,17 +59,11 @@ namespace Titanoboa
             twigTrigger.StockSymbol = existingBuyTrigger.StockSymbol;
             twigTrigger.StockPrice = buyPrice;
 
-            // TODO: Push twigTrigger to Rabbit Q
+            // Push twigTrigger to Rabbit Q
+            RabbitHelper.PushCommand(twigTrigger);
 
-            if (true) // TODO: IF ACK
-            {
-                // Update the transaction price
-                TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, buyPrice);
-            }
-            else
-            {
-                throw new InvalidProgramException("The SELL_TRIGGER that is trying to be set already exist in trigger server, but not in the database!");
-            }
+            // Update the transaction price
+            TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, buyPrice);
         }
     }
 }
