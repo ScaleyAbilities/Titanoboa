@@ -1,10 +1,13 @@
+using System;
+using System.Data;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
     public static partial class Commands
     {
-        public static void CancelSetBuy(string username, JObject commandParams) {
+        public static void CancelSetBuy(string username, JObject commandParams)
+        {
             ParamHelper.ValidateParamsExist(commandParams, "stock");
 
             // Unpack JObject
@@ -16,20 +19,48 @@ namespace Titanoboa
             Program.Logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
-            var existingSetBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            if (existingSetBuyTrigger != null)
+            var existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (existingBuyTrigger != null)
             {
-                var refund = existingSetBuyTrigger.BalanceChange;
+                // Send new trigger to Twig
+                dynamic twigTrigger = new JObject();
 
-                // Refund user
-                var newBalance = user.Balance + refund;
-                TransactionHelper.UpdateUserBalance(ref user, newBalance);
+                // Populate JSON Object
+                twigTrigger.Id = existingBuyTrigger.Id;
+                twigTrigger.User = existingBuyTrigger.User;
+                twigTrigger.Command = "CANCEL_TRIGGER";
+                twigTrigger.StockSymbol = existingBuyTrigger.StockSymbol;
+                twigTrigger.StockAmount = existingBuyTrigger.StockAmount;
+                twigTrigger.StockPrice = existingBuyTrigger.StockPrice;
 
-                // Cancel transaction
-                TransactionHelper.DeleteTransaction(existingSetBuyTrigger);
+                // TODO: Push twigTrigger to Rabbit Q
+
+                // Cancel transaction & log
+                // IF ACK from twig 
+                if (true)
+                {
+                    // If trigger can be successfully cancelled, refund user's money
+                    var refund = existingBuyTrigger.BalanceChange;
+                    if (refund != 0)
+                    {
+                        // Refund user
+                        var newBalance = user.Balance + refund;
+                        TransactionHelper.UpdateUserBalance(ref user, newBalance);
+                    }
+                    // Cancel transaction
+                    TransactionHelper.DeleteTransaction(existingBuyTrigger);
+                }
+                else
+                {
+                    throw new InvalidProgramException("The SELL trigger that is trying to be cancelled has already gone through!");
+                }
             }
-            
+            else
+            {
+                throw new System.InvalidOperationException("No BUY_TRIGGER to cancel.");
+            }
+
         }
-        
+
     }
 }

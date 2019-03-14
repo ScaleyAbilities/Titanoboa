@@ -28,30 +28,40 @@ namespace Titanoboa
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
 
             // Check if existing trigger exists and update amount, else create new trigger
-            Transaction ExistingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            if (ExistingBuyTrigger != null)
+            Transaction existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (existingBuyTrigger != null)
             {
-                var newAmount = ExistingBuyTrigger.BalanceChange + amount;
-                TransactionHelper.SetTransactionBalanceChange(ref ExistingBuyTrigger, newAmount);
+                var newAmount = existingBuyTrigger.BalanceChange + amount;
 
                 // If trigger has already been set, and this is an update on how much to buy
-                if(ExistingBuyTrigger.StockPrice != null)
+                if(existingBuyTrigger.StockPrice != null)
                 {
                     // Send new trigger to Twig
                     dynamic twigTrigger = new JObject();
 
                     // Populate JSON Object
-                    twigTrigger.Id = ExistingBuyTrigger.Id;
-                    twigTrigger.User = ExistingBuyTrigger.User;
+                    twigTrigger.Id = existingBuyTrigger.Id;
+                    twigTrigger.User = existingBuyTrigger.User;
                     twigTrigger.Command = "UPDATE_BUY_TRIGGER";
-                    twigTrigger.StockSymbol = ExistingBuyTrigger.StockSymbol;
-                    twigTrigger.StockAmount = ExistingBuyTrigger.StockAmount;
-                    twigTrigger.StockPrice = ExistingBuyTrigger.StockPrice;
+                    twigTrigger.StockSymbol = existingBuyTrigger.StockSymbol;
+                    twigTrigger.StockAmount = newAmount;
+                    twigTrigger.StockPrice = existingBuyTrigger.StockPrice;
+
+                    // TODO: Send twigTrigger to Rabbit Q 
+                    // IF ACK
+                    if(true)
+                    {   
+                        TransactionHelper.SetTransactionBalanceChange(ref existingBuyTrigger, newAmount);
+                    }
+                    else 
+                    {
+                        throw new InvalidProgramException("Tried to update trigger amount, but trigger is in the process of being completed!");
+                    } 
                 }   
             }
             else
             {
-                ExistingBuyTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
+                TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
             }
         }
     }

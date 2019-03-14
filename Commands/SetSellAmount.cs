@@ -18,15 +18,41 @@ namespace Titanoboa
             Program.Logger.LogCommand(user, amount, stockSymbol);
             
             // Check if existing trigger exists
-            Transaction sellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (sellTrigger != null)
+            Transaction existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (existingSellTrigger != null)
             {
-                var newAmount = sellTrigger.BalanceChange + amount;
-                TransactionHelper.SetTransactionBalanceChange(ref sellTrigger, newAmount);
+
+                var newAmount = existingSellTrigger.BalanceChange + amount;
+                                
+                // If trigger has already been set, and this is an update on how much to buy
+                if(existingSellTrigger.StockPrice != null)
+                {
+                    // Send new trigger to Twig
+                    dynamic twigTrigger = new JObject();
+
+                    // Populate JSON Object
+                    twigTrigger.Id = existingSellTrigger.Id;
+                    twigTrigger.User = existingSellTrigger.User;
+                    twigTrigger.Command = "UPDATE_SELL_TRIGGER";
+                    twigTrigger.StockSymbol = existingSellTrigger.StockSymbol;
+                    twigTrigger.StockAmount = newAmount;
+                    twigTrigger.StockPrice = existingSellTrigger.StockPrice;
+
+                    // TODO: Send twigTrigger to Rabbit Q,  ack = response
+                    // IF ACK
+                    if(true) 
+                    {
+                        TransactionHelper.SetTransactionBalanceChange(ref existingSellTrigger, newAmount);
+                    } 
+                    else 
+                    {
+                        throw new InvalidProgramException("Tried to update trigger amount, but trigger is in the process of being completed!");
+                    }    
+                }  
             }
             else
             {
-                sellTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
+                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
             }
         }
     }

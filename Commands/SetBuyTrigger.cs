@@ -33,36 +33,36 @@ namespace Titanoboa
             // Log command
             Program.Logger.LogCommand(user, buyPrice, stockSymbol);
 
-            var ExistingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            var existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             
             // Make sure trigger was previously created
-            if (ExistingBuyTrigger == null)
+            if (existingBuyTrigger == null)
             {
                 throw new InvalidOperationException("Can't set trigger: No existing trigger");
             } 
             // Make sure the trigger hasn't already been set
-            else if(ExistingBuyTrigger.StockPrice == null) 
+            else if(existingBuyTrigger.StockPrice == null) 
             {
                 throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
             } 
             // Make sure the trigger's amount was set
-            else if(ExistingBuyTrigger.StockAmount == null)
+            else if(existingBuyTrigger.StockAmount == null)
             {
                 throw new InvalidOperationException("Can't set trigger: Trigger amount was never set!");
             }
 
             // Update the transaction price
-            TransactionHelper.SetTransactionStockPrice(ref ExistingBuyTrigger, buyPrice);
+            TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, buyPrice);
 
             // Send new trigger to Twig
             dynamic twigTrigger = new JObject();
 
             // Populate JSON Object
-            twigTrigger.Id = ExistingBuyTrigger.Id;
-            twigTrigger.User = ExistingBuyTrigger.User;
+            twigTrigger.Id = existingBuyTrigger.Id;
+            twigTrigger.User = existingBuyTrigger.User;
             twigTrigger.Command = "BUY_TRIGGER";
-            twigTrigger.StockSymbol = ExistingBuyTrigger.StockSymbol;
-            twigTrigger.StockAmount = ExistingBuyTrigger.StockAmount;
+            twigTrigger.StockSymbol = existingBuyTrigger.StockSymbol;
+            twigTrigger.StockAmount = existingBuyTrigger.StockAmount;
             twigTrigger.StockPrice = buyPrice;
 
             // TODO: Push twigTrigger to Rabbit Q

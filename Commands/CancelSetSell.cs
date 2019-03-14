@@ -1,10 +1,13 @@
+using System;
+using System.Data;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
     public static partial class Commands
     {
-        public static void CancelSetSell(string username, JObject commandParams) {
+        public static void CancelSetSell(string username, JObject commandParams)
+        {
             ParamHelper.ValidateParamsExist(commandParams, "stock");
 
             // Unpack JObject
@@ -16,22 +19,50 @@ namespace Titanoboa
             Program.Logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
-            var existingSetSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (existingSetSellTrigger != null)
+            var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (existingSellTrigger != null)
             {
-                var refundedStocks = existingSetSellTrigger.StockAmount ?? 0;
+                // Send new trigger to Twig
+                dynamic twigTrigger = new JObject();
 
-                // Get users stocks
-                var numUserStocks = TransactionHelper.GetStocks(user, stockSymbol);
+                // Populate JSON Object
+                twigTrigger.Id = existingSellTrigger.Id;
+                twigTrigger.User = existingSellTrigger.User;
+                twigTrigger.Command = "CANCEL_TRIGGER";
+                twigTrigger.StockSymbol = existingSellTrigger.StockSymbol;
+                twigTrigger.StockAmount = existingSellTrigger.StockAmount;
+                twigTrigger.StockPrice = existingSellTrigger.StockPrice;
 
-                // Refund user
-                var newUserStocks = numUserStocks + refundedStocks;
-                TransactionHelper.UpdateStocks(user, stockSymbol, newUserStocks);
+                // TODO: Push twigTrigger to Rabbit Q
+
 
                 // Cancel transaction & log
-                TransactionHelper.DeleteTransaction(existingSetSellTrigger);
+                // IF ACK from twig 
+                if (true)
+                {
+                    // If trigger can be successfully cancelled, refund user's stocks
+                    var refundedStocks = existingSellTrigger.StockAmount ?? 0;
+                    if (refundedStocks != 0)
+                    {
+                        // Get users stocks
+                        var numUserStocks = TransactionHelper.GetStocks(user, stockSymbol);
+
+                        // Refund user
+                        var newUserStocks = numUserStocks + refundedStocks;
+                        TransactionHelper.UpdateStocks(user, stockSymbol, newUserStocks);
+                    }
+                    // Cancel transaction
+                    TransactionHelper.DeleteTransaction(existingSellTrigger);
+                }
+                else
+                {
+                    throw new InvalidProgramException("The SELL trigger that is trying to be cancelled has already gone through!");
+                }
+            }
+            else
+            {
+                throw new System.InvalidOperationException("No SELL_TRIGGER to cancel.");
             }
         }
-        
     }
 }
