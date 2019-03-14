@@ -2,7 +2,7 @@ using System;
 
 namespace Titanoboa
 {
-    public partial class Commands 
+    public partial class CommandHandler 
     {
         /*
             CommitBuy command flow:
@@ -11,10 +11,10 @@ namespace Titanoboa
             3- Add stock amounts
             3- Update buy in transactions table, *set pending flag to false, and update timestamp*
          */
-        public void CommitBuy(string username) {
+        public void CommitBuy() {
             var user = databaseHelper.GetUser(username, false);
 
-            Program.Logger.LogCommand(user);
+            logger.LogCommand(user);
             
             var transaction = databaseHelper.GetLatestPendingTransaction(user, "BUY");
             if (transaction == null)

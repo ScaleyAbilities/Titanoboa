@@ -10,11 +10,13 @@ namespace Titanoboa
     {
         private DbConnection connection;
         private DbTransaction transaction;
+        private Logger logger;
 
-        public DatabaseHelper(DbConnection connection)
+        public DatabaseHelper(DbConnection connection, Logger logger)
         {
             this.connection = connection;
             this.transaction = this.connection.BeginTransaction();
+            this.logger = logger;
         }
 
         public User GetUser(string username, bool withPendingBalance = false) 
@@ -79,7 +81,7 @@ namespace Titanoboa
                 }
 
                 if (createdNewUser)
-                    Program.Logger.LogEvent(Logger.EventType.Debug, $"Created new user", user);
+                    logger.LogEvent(Logger.EventType.Debug, $"Created new user", user);
                 
                 return user;
             }
@@ -98,7 +100,7 @@ namespace Titanoboa
                 // Now that the balance has been updated, update the model
                 user.Balance = balance;
 
-                Program.Logger.LogEvent(Logger.EventType.Debug, $"Updated user balance", user, balance);
+                logger.LogEvent(Logger.EventType.Debug, $"Updated user balance", user, balance);
             }
         }
 
@@ -138,7 +140,7 @@ namespace Titanoboa
                     Type = type
                 };
 
-                Program.Logger.LogTransaction(transaction);
+                logger.LogTransaction(transaction);
                 
                 return transaction;
             }
@@ -193,7 +195,7 @@ namespace Titanoboa
 
                 transaction.Type = "completed";
 
-                Program.Logger.LogTransaction(transaction);
+                logger.LogTransaction(transaction);
             }
         }
 
@@ -255,7 +257,7 @@ namespace Titanoboa
 
                 transaction.BalanceChange = balanceChange;
 
-                Program.Logger.LogTransaction(transaction);
+                logger.LogTransaction(transaction);
             }
         }
 
@@ -273,7 +275,7 @@ namespace Titanoboa
 
                 transaction.StockPrice = stockPrice;
 
-                Program.Logger.LogTransaction(transaction);
+                logger.LogTransaction(transaction);
             }
         }
 
@@ -314,7 +316,7 @@ namespace Titanoboa
                     createCommand.Prepare();
                     createCommand.ExecuteNonQuery();
                     
-                    Program.Logger.LogEvent(Logger.EventType.Debug, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
+                    logger.LogEvent(Logger.EventType.Debug, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
                 }
 
                 return stocks ?? 0;
@@ -333,7 +335,7 @@ namespace Titanoboa
                 command.Prepare();
                 command.ExecuteNonQuery();
 
-                Program.Logger.LogEvent(Logger.EventType.Debug, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
+                logger.LogEvent(Logger.EventType.Debug, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
             }            
         }
 
@@ -345,7 +347,7 @@ namespace Titanoboa
                 command.Prepare();
                 command.ExecuteNonQuery();
 
-                Program.Logger.LogEvent(Logger.EventType.Debug, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
+                logger.LogEvent(Logger.EventType.Debug, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
             }
         }
 

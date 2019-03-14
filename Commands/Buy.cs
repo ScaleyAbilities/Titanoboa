@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
         /*
             Buy command flow:
@@ -13,9 +13,9 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks)
             3- Insert buy into transactions table, *set pending flag to true*
          */
-        public void Buy(string username, JObject commandParams) 
+        public void Buy() 
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             // Unpack JObject
             var amount = (decimal)commandParams["amount"];
@@ -25,7 +25,7 @@ namespace Titanoboa
             var user = databaseHelper.GetUser(username, true);
 
             // Log the command
-            Program.Logger.LogCommand(user, amount, stockSymbol);
+            logger.LogCommand(user, amount, stockSymbol);
             
             if (user.PendingBalance < amount)
             {

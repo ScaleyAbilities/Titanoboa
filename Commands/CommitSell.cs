@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
         /*
             CommitSell command flow:
@@ -12,11 +12,11 @@ namespace Titanoboa
             3- Remove stock amounts
             3- Update buy in transactions table, *set pending flag to false, and update timestamp*
          */
-        public void CommitSell(string username)
+        public void CommitSell()
         {
             var user = databaseHelper.GetUser(username, false);
             
-            Program.Logger.LogCommand(user);
+            logger.LogCommand(user);
 
             var transaction = databaseHelper.GetLatestPendingTransaction(user, "SELL");
             if (transaction == null)

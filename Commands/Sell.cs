@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
         /*
          * - check quote server for current stock price
@@ -12,15 +12,15 @@ namespace Titanoboa
          * - calculate if user has enough to sell, stock amount * current price > selling price
          * - update transaction server
          */
-        public void Sell(string username, JObject commandParams)
+        public void Sell()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             var sellAmount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
             var user = databaseHelper.GetUser(username);
 
-            Program.Logger.LogCommand(user, sellAmount, stockSymbol);
+            logger.LogCommand(user, sellAmount, stockSymbol);
 
             // Get current stock price
             var stockPrice = databaseHelper.GetStockPrice(user, stockSymbol);

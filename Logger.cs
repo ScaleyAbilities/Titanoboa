@@ -23,7 +23,7 @@ namespace Titanoboa
         private int insertNum = 0;
         private bool committed = false;
 
-        public Logger()
+        public Logger(string commandName)
         {
             // We need a work ID, so we'll create one in the DB
             using (var connection = SqlHelper.GetConnection())
@@ -36,7 +36,7 @@ namespace Titanoboa
             // Create new unit of work and get ID
             fullCommand.Parameters.AddWithValue("@workid", WorkId);
             fullCommand.Parameters.AddWithValue("@server", Program.ServerName);
-            fullCommand.Parameters.AddWithValue("@command", Program.CurrentCommand);
+            fullCommand.Parameters.AddWithValue("@command", commandName);
         }
 
         public void LogCommand(User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)

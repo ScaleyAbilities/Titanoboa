@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
         /*
             DisplaySummary command flow:
@@ -13,11 +13,11 @@ namespace Titanoboa
             - get user's balance
             - get user's existing triggers
          */
-        public void DisplaySummary(string username)
+        public void DisplaySummary()
         {
             // TODO: this
             var user = databaseHelper.GetUser(username);
-            Program.Logger.LogCommand(user);
+            logger.LogCommand(user);
         }
     }
 }

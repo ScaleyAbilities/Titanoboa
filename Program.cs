@@ -11,8 +11,6 @@ namespace Titanoboa
     class Program
     {
         internal static readonly string ServerName = Environment.GetEnvironmentVariable("SERVER_NAME") ?? "Titanoboa";
-        internal static Logger Logger = null;
-        internal static string CurrentCommand = null;
 
         static void RunCommands(JObject json)
         {
@@ -26,14 +24,15 @@ namespace Titanoboa
                 return;
             }
 
-            CurrentCommand = json["cmd"].ToString().ToUpper();
+            string command = json["cmd"].ToString().ToUpper();
             string username = json["usr"].ToString();
             JObject commandParams = (JObject)json["params"];
+            Logger logger;
 
             try
             {
                 // Set up a logger for this unit of work
-                Logger = new Logger();
+                logger = new Logger(command);
             }
             catch (DbException ex)
             {
@@ -42,77 +41,23 @@ namespace Titanoboa
             }
 
             using (var connection = SqlHelper.GetConnection())
-            using (var dbHelper = new DatabaseHelper(connection))
+            using (var dbHelper = new DatabaseHelper(connection, logger))
             {
                 string error = null;
-                var commands = new Commands(dbHelper);
+                var commandHandler = new CommandHandler(username, command, commandParams, dbHelper, logger);
                 try 
                 {
-                    switch (CurrentCommand)
-                    {
-                        case "QUOTE":
-                            commands.Quote(username, commandParams);
-                            break;
-                        case "ADD":
-                            commands.Add(username, commandParams);
-                            break;
-                        case "BUY":
-                            commands.Buy(username, commandParams);
-                            break;
-                        case "COMMIT_BUY":
-                            commands.CommitBuy(username);
-                            break;
-                        case "CANCEL_BUY":
-                            commands.CancelBuy(username);
-                            break;
-                        case "SELL":
-                            commands.Sell(username, commandParams);
-                            break;
-                        case "COMMIT_SELL":
-                            commands.CommitSell(username);
-                            break;
-                        case "CANCEL_SELL":
-                            commands.CancelSell(username);
-                            break;
-                        case "SET_BUY_AMOUNT":
-                            commands.SetBuyAmount(username, commandParams);
-                            break;
-                        case "SET_BUY_TRIGGER":
-                            commands.SetBuyTrigger(username, commandParams);
-                            break;
-                        case "CANCEL_SET_BUY":
-                            commands.CancelSetBuy(username, commandParams);
-                            break;
-                        case "SET_SELL_AMOUNT":
-                            commands.SetSellAmount(username, commandParams);
-                            break;
-                        case "SET_SELL_TRIGGER":
-                            commands.SetSellTrigger(username, commandParams);
-                            break;
-                        case "CANCEL_SET_SELL":
-                            commands.CancelSetSell(username, commandParams);
-                            break;
-                        case "DUMPLOG":
-                            commands.Dumplog(username, commandParams);
-                            break;
-                        case "DISPLAY_SUMMARY":
-                            commands.DisplaySummary(username);
-                            break;
-                        default:
-                            Console.Error.WriteLine($"Unknown command '{CurrentCommand}'");
-                            break;
-                    }
-
-                    Logger.CommitLogs();
+                    commandHandler.Run();
+                    logger.CommitLogs();
                     dbHelper.CommitAllChanges();
                 }
                 catch (ArgumentException ex)
                 {
-                    error = $"Invalid parameters for command '{CurrentCommand}': {ex.Message}";
+                    error = $"Invalid parameters for command '{command}': {ex.Message}";
                 }
                 catch (InvalidOperationException ex)
                 {
-                    error = $"Command '{CurrentCommand}' could not be run: {ex.Message}";
+                    error = $"Command '{command}' could not be run: {ex.Message}";
                 }
                 catch (DbException ex)
                 {
@@ -127,15 +72,11 @@ namespace Titanoboa
                 {
                     Console.Error.WriteLine(error);
                     dbHelper.RollbackAllChanges();
-                    Logger = new Logger();
-                    Logger.LogEvent(Logger.EventType.Error, error);
-                    Logger.CommitLogs();
+                    logger = new Logger(command);
+                    logger.LogEvent(Logger.EventType.Error, error);
+                    logger.CommitLogs();
                 }
             }
-
-            // Clear the logger now that we are done this unit of work
-            Logger = null;
-            CurrentCommand = null;
         }
 
         static async Task Main(string[] args)

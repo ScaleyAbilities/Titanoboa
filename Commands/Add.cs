@@ -4,17 +4,17 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
-        public void Add(string username, JObject commandParams) 
+        public void Add()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount");
+            CheckParams("amount");
             
             decimal amount = (decimal)commandParams["amount"];
             var user = databaseHelper.GetUser(username);
 
             // Log this command
-            Program.Logger.LogCommand(user, amount);
+            logger.LogCommand(user, amount);
 
             // Update existing user balance
             decimal newBalance = user.Balance + amount;

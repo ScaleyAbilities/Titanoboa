@@ -3,19 +3,19 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
-        public void SetSellAmount(string username, JObject commandParams)
+        public void SetSellAmount()
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             // Get params
             var user = databaseHelper.GetUser(username, true);
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            Program.Logger.LogCommand(user, amount, stockSymbol);
+            logger.LogCommand(user, amount, stockSymbol);
             
             // Check if existing trigger exists
             Transaction sellTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");

@@ -5,7 +5,7 @@ using System.Xml;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
         /*
             Dumplog command flow:
@@ -18,24 +18,24 @@ namespace Titanoboa
                 - get transactions by user
                 - write xml
          */
-        public void Dumplog(string username, JObject commandParams)
+        public void Dumplog()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "filename");
+            CheckParams("filename");
 
             var filename = (string)commandParams["filename"];
 
             if (!string.IsNullOrEmpty(username))
             {
                 var user = databaseHelper.GetUser(username);
-                Program.Logger.LogCommand(user, null, null, filename);
-                Program.Logger.CommitLogs();
+                logger.LogCommand(user, null, null, filename);
+                logger.CommitLogs();
                 Logger.WaitForTasks();
                 LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
-                Program.Logger.LogCommand(null, null, null, filename);
-                Program.Logger.CommitLogs();
+                logger.LogCommand(null, null, null, filename);
+                logger.CommitLogs();
                 Logger.WaitForTasks();
                 LogXmlHelper.CreateLog(filename);
             }

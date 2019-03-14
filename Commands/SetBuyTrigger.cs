@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
         /*
             Set Buy Trigger command flow:
@@ -13,9 +13,9 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
             3- Update spending balance, and number of stocks in transactions table
          */
-        public void SetBuyTrigger(string username, JObject commandParams) 
+        public void SetBuyTrigger() 
         {
-            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
+            CheckParams("price", "stock");
 
             // Unpack JObject
             var buyPrice = (decimal)commandParams["price"];
@@ -25,7 +25,7 @@ namespace Titanoboa
             var user = databaseHelper.GetUser(username, true);
 
             // Log 
-            Program.Logger.LogCommand(user, buyPrice, stockSymbol);
+            logger.LogCommand(user, buyPrice, stockSymbol);
 
             var buyTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             // Make sure trigger was previously created

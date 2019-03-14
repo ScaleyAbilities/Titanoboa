@@ -2,10 +2,10 @@ using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public partial class Commands
+    public partial class CommandHandler
     {
-        public void CancelSetSell(string username, JObject commandParams) {
-            ParamHelper.ValidateParamsExist(commandParams, "stock");
+        public void CancelSetSell() {
+            CheckParams("stock");
 
             // Unpack JObject
             var stockSymbol = commandParams["stock"].ToString();
@@ -13,7 +13,7 @@ namespace Titanoboa
             //  Get user
             var user = databaseHelper.GetUser(username);
 
-            Program.Logger.LogCommand(user, null, stockSymbol);
+            logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
             var existingSetSellTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
