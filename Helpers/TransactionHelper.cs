@@ -193,7 +193,8 @@ namespace Titanoboa
 
         public static decimal GetStockPrice(User user, string stockSymbol)
         {
-            return QuoteHelper.GetQuote(user, stockSymbol);
+            return CobraHelper.GetQuote(user, stockSymbol);
+            // return QuoteHelper.GetQuote(user, stockSymbol);
         }
 
         public static Transaction GetTriggerTransaction(User user, string stockSymbol, string triggerType)
