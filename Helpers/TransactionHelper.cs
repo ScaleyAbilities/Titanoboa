@@ -129,6 +129,23 @@ namespace Titanoboa
             return transaction;
         }
 
+        internal static void SetTransactionNumStocks(ref Transaction transaction, int numStockToSell)
+        {
+            MySqlCommand command = SqlHelper.CreateSqlCommand();
+
+            command.CommandText = @"UPDATE transactions SET stockAmount = @numStocksToSell 
+                                    WHERE transactions.id = @id";
+            
+            command.Parameters.AddWithValue("@stockPrice", numStockToSell);
+            command.Parameters.AddWithValue("@id", transaction.Id);
+            command.Prepare();
+            command.ExecuteNonQuery();
+
+            transaction.StockAmount = numStockToSell;
+
+            Program.Logger.LogTransaction(transaction);
+        }
+
         public static Transaction GetLatestPendingTransaction(User user, string commandText) {
             MySqlCommand command = SqlHelper.CreateSqlCommand();
 

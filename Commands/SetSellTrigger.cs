@@ -17,44 +17,41 @@ namespace Titanoboa
          */
         public static void SetSellTrigger(string username, JObject commandParams)
         {
+            // Sanity check
             ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
-            // Unpack JObject
-            var sellPrice = (decimal)commandParams["price"];
-            if (sellPrice == 0)
-            {
-                throw new InvalidOperationException("Can't have a sell price of 0.");
-            }
-            var stockSymbol = commandParams["stock"].ToString();
-
-            // Get users current balance
+            // Get params
             var user = TransactionHelper.GetUser(username, true);
+            var sellPrice = (decimal)commandParams["price"];
+            var stockSymbol = commandParams["stock"].ToString();
 
             // Log command
             Program.Logger.LogCommand(user, sellPrice, stockSymbol);
 
-            // Get the existing trigger to 
+            // Can't have a sell price of 0
+            if (sellPrice == 0)
+            {
+                throw new InvalidOperationException("Can't have a sell price of 0.");
+            }
+
+            // Get the existing trigger transaction to be set
             var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSellTrigger == null)
             {
                 throw new InvalidOperationException("Can't set trigger: No existing trigger");
             }
-            // Make sure the trigger stock price hasn't already been set
-            else if (existingSellTrigger.StockPrice != null)
+
+            // Make sure the trigger stock price or stock amount hasn't already been set
+            if (existingSellTrigger.StockPrice != null || existingSellTrigger.StockAmount != null)
             {
                 throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
-            }
-            // Make sure the trigger's amount was set
-            else if (existingSellTrigger.BalanceChange == 0)
-            {
-                throw new InvalidOperationException("Can't set trigger: Trigger dollars amount was never set!");
             }
 
             // Find amount in $$ the user wants to sell of their stock
             var sellAmountInDollars = existingSellTrigger.BalanceChange;
             if (sellAmountInDollars == 0)
             {
-                throw new System.InvalidOperationException("Cannot sell 0 dollars worth of stocks.");
+                throw new InvalidOperationException("Can't set trigger: Trigger dollars amount was never set!");
             }
 
             // Make sure the price isn't higher than the amount they want to sell
@@ -62,35 +59,31 @@ namespace Titanoboa
             {
                 throw new InvalidOperationException("Can't sell less than 1 stock.");
             }
-
-            // Send new trigger to Twig
-            dynamic twigTrigger = new JObject();
-
-            // Populate JSON Object
-            twigTrigger.User = existingSellTrigger.User;
-            twigTrigger.Command = "SELL";
-            twigTrigger.StockSymbol = existingSellTrigger.StockSymbol;
-            twigTrigger.StockPrice = sellPrice;
-
-            // Push twigTrigger to Rabbit Q
-            RabbitHelper.PushCommand(twigTrigger);
+            
+            // Get the users pending stocks, error if not enough
+            var userStockAmountPending = TransactionHelper.GetStocks(user, stockSymbol, true);
+            if (userStockAmountPending <= 0)
+            {
+                throw new InvalidOperationException("User doesn't have enough stock to sell!.");
+            }
 
             // Calculate whole num of stocks to be sold
             var numStockToSell = (int)Math.Floor(sellAmountInDollars / sellPrice);
-            var userStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
 
-            // Subtract stocks from user account
-            // any extra $$ will be refunded upon trigger point being hit / cancel trigger events
-            var newUserStockAmount = userStockAmount - numStockToSell;
+            // Just sell all available stocks if they don't have enough
+            numStockToSell = (numStockToSell > userStockAmountPending) ? userStockAmountPending : numStockToSell;
 
-            // Just sell all stocks if they don't have enough
-            newUserStockAmount = (newUserStockAmount < 0) ? 0 : newUserStockAmount;
-
-            // Update the user amonut of stock
-            TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
-
-            // Update the selling price
+            // Set transaction StockAmount and StockPrice
+            TransactionHelper.SetTransactionNumStocks(ref existingSellTrigger, numStockToSell);
             TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, sellPrice);
+
+            // Send new trigger to Twig
+            JObject twigTrigger = new JObject();
+            twigTrigger["User"] = existingSellTrigger.User.Id;
+            twigTrigger["Command"] = "SELL";
+            twigTrigger["StockSymbol"] = existingSellTrigger.StockSymbol;
+            twigTrigger["StockPrice"] = sellPrice;
+            RabbitHelper.PushCommand(twigTrigger);
         }
     }
 }

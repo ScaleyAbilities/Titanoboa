@@ -10,56 +10,33 @@ namespace Titanoboa
         {
             ParamHelper.ValidateParamsExist(commandParams, "stock");
 
-            // Unpack JObject
+            // Get params
+            var user = TransactionHelper.GetUser(username);
             var stockSymbol = commandParams["stock"].ToString();
 
-            //  Get user
-            var user = TransactionHelper.GetUser(username);
-
+            // Log Command
             Program.Logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
             var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (existingSellTrigger != null)
+            if (existingSellTrigger == null)
             {
-                // Send new trigger to Twig
-                dynamic twigTrigger = new JObject();
-
-                // Populate JSON Object
-                twigTrigger.User = existingSellTrigger.User;
-                twigTrigger.Command = "CANCEL";
-                twigTrigger.StockSymbol = existingSellTrigger.StockSymbol;
-                twigTrigger.StockPrice = existingSellTrigger.StockPrice;
-
-                // TODO: Push twigTrigger to Rabbit Q
-
-                // Cancel transaction & log
-                // IF ACK from twig 
-                if (true)
-                {
-                    // If trigger can be successfully cancelled, refund user's stocks
-                    var refundedStocks = existingSellTrigger.StockAmount ?? 0;
-                    if (refundedStocks != 0)
-                    {
-                        // Get users stocks
-                        var numUserStocks = TransactionHelper.GetStocks(user, stockSymbol);
-
-                        // Refund user
-                        var newUserStocks = numUserStocks + refundedStocks;
-                        TransactionHelper.UpdateStocks(user, stockSymbol, newUserStocks);
-                    }
-                    // Cancel transaction
-                    TransactionHelper.DeleteTransaction(existingSellTrigger);
-                }
-                else
-                {
-                    throw new InvalidProgramException("The SELL_TRIGGER that is trying to be cancelled has already gone through!");
-                }
+                throw new InvalidOperationException("Can't cancel SELL_TRIGGER: Trigger doesn't exist");
             }
-            else
+            else if (existingSellTrigger.Type == "completed")
             {
-                throw new System.InvalidOperationException("No SELL_TRIGGER to cancel.");
+                throw new InvalidOperationException("Can't commit SELL_TRIGGER: Trigger has already gone through!");
             }
+
+            // Cancel transaction
+            TransactionHelper.DeleteTransaction(existingSellTrigger);
+
+            // Send new trigger to Twig
+            JObject twigTrigger = new JObject();
+            twigTrigger["User"] = existingSellTrigger.User.Username;
+            twigTrigger["Command"] = "CANCEL_SELL";
+            twigTrigger["StockSymbol"] = existingSellTrigger.StockSymbol;
+            RabbitHelper.PushCommand(twigTrigger);
         }
     }
 }

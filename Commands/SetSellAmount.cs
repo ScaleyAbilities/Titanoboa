@@ -10,28 +10,33 @@ namespace Titanoboa
             // Sanity check
             ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
 
-            // Get params
+            // Unpack JObject
             var user = TransactionHelper.GetUser(username, true);
-            var amount = (decimal)commandParams["amount"];
+            var sellAmountInDollars = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
+            
+            // Log Command
+            Program.Logger.LogCommand(user, sellAmountInDollars, stockSymbol);
 
-            Program.Logger.LogCommand(user, amount, stockSymbol);
+            // Doesn't make sense to have a sell amount of 0$
+            if (sellAmountInDollars == 0)
+            {
+                throw new InvalidOperationException("Can't set a sell amount of 0");
+            }
 
             // Check if existing trigger exists
-            Transaction existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSellTrigger != null)
             {
-                var newAmount = existingSellTrigger.BalanceChange + amount;
+                var newSellAmountInDollars = existingSellTrigger.BalanceChange + sellAmountInDollars;
 
                 // If trigger has already been set, and this is an update on how much to buy
-                if (existingSellTrigger.StockPrice != null)
-                {
-                    TransactionHelper.SetTransactionBalanceChange(ref existingSellTrigger, newAmount);
-                }
+                TransactionHelper.SetTransactionBalanceChange(ref existingSellTrigger, newSellAmountInDollars);
             }
             else
             {
-                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
+                // Create transaction with stockAmount = null, stockPrice = null
+                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", sellAmountInDollars, null, null, "trigger");
             }
         }
     }

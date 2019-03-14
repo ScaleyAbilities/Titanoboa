@@ -6,7 +6,7 @@ namespace Titanoboa
 {
      public static partial class Commands 
     {
-        public static void CommitSellTrigger(string username, JObject commandParams) {
+        public static void CommitBuyTrigger(string username, JObject commandParams) {
 
         }
     }
