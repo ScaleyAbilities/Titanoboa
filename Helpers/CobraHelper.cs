@@ -12,7 +12,7 @@ namespace Titanoboa
 {
     public static class CobraHelper
     {
-        private static string quoteEndpoint = "https://localhost:5001/api/quote";
+        private static string quoteEndpoint = "https://localhost:5001/quote";
         private const int quotePort = 5001;
         
         public static decimal GetQuote(User user, string stockSymbol)
