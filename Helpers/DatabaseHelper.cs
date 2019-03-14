@@ -48,11 +48,14 @@ namespace Titanoboa
                 {
                     // User doesn't exist, create them
                     reader.Close();
-                    var createCommand = SqlHelper.CreateSqlCommand();
-                    createCommand.CommandText = "INSERT INTO users (username, balance) VALUES (@username, 0)";
-                    createCommand.Parameters.AddWithValue("@username", username);
-                    createCommand.Prepare();
-                    createCommand.ExecuteNonQuery();
+
+                    using (var createCommand = GetCommand())
+                    {
+                        createCommand.CommandText = "INSERT INTO users (username, balance) VALUES (@username, 0)";
+                        createCommand.Parameters.AddWithValue("@username", username);
+                        createCommand.Prepare();
+                        createCommand.ExecuteNonQuery();
+                    }                    
 
                     createdNewUser = true;
 
@@ -120,7 +123,7 @@ namespace Titanoboa
                                         RETURNING id;";
 
                 command.Parameters.AddWithValue("@userid", user.Id);
-                command.Parameters.AddWithValue("@stocksymbol", stockSymbol);
+                command.Parameters.AddWithValue("@stocksymbol", (object)stockSymbol ?? DBNull.Value);
                 command.Parameters.AddWithValue("@command", commandText);
                 command.Parameters.AddWithValue("@balancechange", balanceChange);
                 command.Parameters.AddWithValue("@stockamount", (object)stockAmount ?? DBNull.Value);
@@ -150,11 +153,11 @@ namespace Titanoboa
             using (var command = GetCommand())
             {
                 command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
-                                        FROM transactions WHERE transactions.userid = @userid
-                                        AND transactions.transactiontime >= NOW() - INTERVAL '60' SECOND
-                                        AND transactions.command = @commandText
-                                        AND transactions.type = 'pending'
-                                        ORDER BY transactions.transactiontime DESC
+                                        FROM transactions WHERE userid = @userid
+                                        AND transactiontime >= NOW() - INTERVAL '60' SECOND
+                                        AND command = @commandText
+                                        AND type = 'pending'
+                                        ORDER BY transactiontime DESC
                                         LIMIT 1";
 
                 command.Parameters.AddWithValue("@userid", user.Id);
@@ -209,9 +212,9 @@ namespace Titanoboa
             using (var command = GetCommand())
             {
                 command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
-                                        FROM transactions WHERE transactions.userid = @userid
-                                        AND transactions.command = @commandText
-                                        AND transactions.type = 'trigger'
+                                        FROM transactions WHERE userid = @userid
+                                        AND command = @commandText
+                                        AND type = 'trigger'
                                         LIMIT 1";
                 
                 command.Parameters.AddWithValue("@userid", user.Id);
@@ -247,8 +250,8 @@ namespace Titanoboa
             using (var command = GetCommand())
             {
                 command.CommandText = @"UPDATE transactions SET
-                                        transactions.balancechange = @balanceChange
-                                        WHERE transactions.id = @id";
+                                        balancechange = @balanceChange
+                                        WHERE id = @id";
 
                 command.Parameters.AddWithValue("@balanceChange", balanceChange);
                 command.Parameters.AddWithValue("@id", transaction.Id);
@@ -266,7 +269,7 @@ namespace Titanoboa
             using (var command = GetCommand())
             {
                 command.CommandText = @"UPDATE transactions SET stockPrice = @stockPrice 
-                                        WHERE transactions.id = @id";
+                                        WHERE id = @id";
                 
                 command.Parameters.AddWithValue("@stockPrice", stockPrice);
                 command.Parameters.AddWithValue("@id", transaction.Id);
@@ -297,7 +300,7 @@ namespace Titanoboa
                               AND command = 'SELL' AND type = 'pending' AND stocksymbol = @stockSymbol
                               GROUP BY userid
                           ) t ON t.userid = stocks.userid
-                          WHERE stocks.userid = @userid";
+                          WHERE stocks.userid = @userid AND stocksymbol = @stockSymbol";
                 }
                 command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
                 command.Parameters.AddWithValue("@userid", user.Id);
@@ -308,13 +311,15 @@ namespace Titanoboa
                 if (stocks == null)
                 {
                     // User stocks entry doesn't exist, create with 0 stocks
-                    var createCommand = SqlHelper.CreateSqlCommand();
-                    createCommand.CommandText = @"INSERT INTO stocks (userid, stocksymbol, amount)
-                                                  VALUES (@userid, @stockSymbol, 0)";
-                    createCommand.Parameters.AddWithValue("@userid", user.Id);
-                    createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
-                    createCommand.Prepare();
-                    createCommand.ExecuteNonQuery();
+                    using (var createCommand = GetCommand())
+                    {
+                        createCommand.CommandText = @"INSERT INTO stocks (userid, stocksymbol, amount)
+                                                      VALUES (@userid, @stockSymbol, 0)";
+                        createCommand.Parameters.AddWithValue("@userid", user.Id);
+                        createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
+                        createCommand.Prepare();
+                        createCommand.ExecuteNonQuery();
+                    }
                     
                     logger.LogEvent(Logger.EventType.Debug, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
                 }
@@ -342,7 +347,7 @@ namespace Titanoboa
         public void DeleteTransaction(Transaction transaction) {
             using (var command = GetCommand())
             {
-                command.CommandText = @"DELETE FROM transactions WHERE transactions.id = @transactionId";
+                command.CommandText = @"DELETE FROM transactions WHERE id = @transactionId";
                 command.Parameters.AddWithValue("@transactionId", transaction.Id);
                 command.Prepare();
                 command.ExecuteNonQuery();
@@ -374,7 +379,6 @@ namespace Titanoboa
             {
                 if (disposing)
                 {
-                    transaction.Commit();
                     transaction.Dispose();
                     connection.Dispose();
                 }

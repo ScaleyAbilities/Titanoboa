@@ -39,24 +39,5 @@ namespace Titanoboa.Models
                 }
             }
         }
-
-        static void Main(string[] args)
-        {
-            // Display the number of command line arguments:
-            System.Console.WriteLine(args.Length + " args");
-            User me = new User();
-            me.Id = 123;
-            me.Username = "Rick";
-            TriggerList obj = new TriggerList();
-            obj.Add("aks","buy", 3.90m, me);
-            obj.Add("aks","buy", 2.99m, me);
-            obj.Add("aks","buy", 5m, me);
-            obj.Add("aks","buy", 1m, me);
-            obj.Add("kek","sell", 4m, me);
-
-            obj.CheckStockTriggers("aks",3m);
-            obj.CheckStockTriggers("kek",3m);
-            System.Console.WriteLine("Done.");
-        }
     }
 }

@@ -14,7 +14,7 @@ namespace Titanoboa
             Debug
         }
 
-        public long WorkId;
+        public int WorkId;
         private NpgsqlCommand fullCommand = new NpgsqlCommand();
         private static int runningThreads = 0;
 
@@ -30,7 +30,7 @@ namespace Titanoboa
             using (var command = SqlHelper.GetCommand(connection))
             {
                 command.CommandText = "INSERT INTO logs_work DEFAULT VALUES RETURNING id";
-                WorkId = (long)command.ExecuteScalar();
+                WorkId = (int)command.ExecuteScalar();
             }
 
             // Create new unit of work and get ID

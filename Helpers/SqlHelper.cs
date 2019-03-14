@@ -9,13 +9,12 @@ namespace Titanoboa
 {
     public static class SqlHelper
     {
-        private static NpgsqlConnection connection;
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
         private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
 
         public static NpgsqlConnection GetConnection()
         {
-            connection = new NpgsqlConnection(connectionString);
+            var connection = new NpgsqlConnection(connectionString);
 
             var connected = false;
             while (!connected)
@@ -38,18 +37,6 @@ namespace Titanoboa
         public static NpgsqlCommand GetCommand(DbConnection connection, DbTransaction transaction = null)
         {
             return new NpgsqlCommand(null, (NpgsqlConnection)connection, (NpgsqlTransaction)transaction);
-        }
-
-        public static NpgsqlCommand CreateSqlCommand()
-        {
-            NpgsqlCommand command = new NpgsqlCommand();
-            command.Connection = connection;
-            return command;
-        }
-
-        public static NpgsqlTransaction StartTransaction()
-        {
-            return connection.BeginTransaction();
         }
 
         public static int? ConvertToNullableInt32(object num)
