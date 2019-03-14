@@ -10,7 +10,7 @@ namespace Titanoboa
 {
     class Program
     {
-        internal static readonly string ServerName = "Titanoboa";
+        internal static readonly string ServerName = Environment.GetEnvironmentVariable("SERVER_NAME") ?? "Titanoboa";
         internal static Logger Logger = null;
         internal static string CurrentCommand = null;
 
@@ -141,6 +141,7 @@ namespace Titanoboa
         static async Task Main(string[] args)
         {
             RabbitHelper.CreateConsumer(RunCommands);
+            // TODO: Need to make rabbit queue for sending triggers to Twig
             
             Console.WriteLine("Titanoboa running...");
 

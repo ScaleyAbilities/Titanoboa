@@ -16,10 +16,12 @@ namespace Titanoboa
 
         public long WorkId;
         private NpgsqlCommand fullCommand = new NpgsqlCommand();
+        private static int runningThreads = 0;
 
         // We use a StringBuilder to build up the command since it's faster than using += on a string
         private StringBuilder fullCommandText = new StringBuilder();
         private int insertNum = 0;
+        private bool committed = false;
 
         public Logger()
         {
@@ -49,13 +51,14 @@ namespace Titanoboa
             insertNum++;
         }
 
-        public void LogQuoteServer(User user, decimal amount, string stockSymbol, DateTime quoteServerTime, string cryptoKey)
+        public void LogQuoteServer(User user, decimal? amount, string quoteStockSymbol, string quoteUserId, string quoteServerTime, string cryptoKey)
         {
-            fullCommandText.Append($@"INSERT INTO logs (logtype, server, workid, userid, amount, stocksymbol, quoteservertime, cryptokey)
-                                      VALUES ('quote'::log_type, @server, @workid, @userid{insertNum}, @amount{insertNum}, @stocksymbol{insertNum}, @quoteservertime{insertNum}, @cryptokey{insertNum});");
+            fullCommandText.Append($@"INSERT INTO logs (logtype, server, workid, userid, amount, stocksymbol, message, quoteservertime, cryptokey)
+                                      VALUES ('quote'::log_type, @server, @workid, @userid{insertNum}, @amount{insertNum}, @stocksymbol{insertNum}, @quoteuser{insertNum}, @quoteservertime{insertNum}, @cryptokey{insertNum});");
             fullCommand.Parameters.AddWithValue($"@userid{insertNum}", user.Id);
             fullCommand.Parameters.AddWithValue($"@amount{insertNum}", amount);
-            fullCommand.Parameters.AddWithValue($"@stocksymbol{insertNum}", stockSymbol);
+            fullCommand.Parameters.AddWithValue($"@stocksymbol{insertNum}", quoteStockSymbol);
+            fullCommand.Parameters.AddWithValue($"@quoteuser{insertNum}", quoteUserId);
             fullCommand.Parameters.AddWithValue($"@quoteservertime{insertNum}", quoteServerTime);
             fullCommand.Parameters.AddWithValue($"@cryptokey{insertNum}", cryptoKey);
 
@@ -95,7 +98,7 @@ namespace Titanoboa
 
         public void CommitLogs()
         {
-            if (insertNum <= 0)
+            if (insertNum <= 0 || committed)
                 return;
 
             var thread = new Thread(() => {
@@ -105,10 +108,22 @@ namespace Titanoboa
                     fullCommand.CommandText = fullCommandText.ToString();
                     fullCommand.Prepare();
                     fullCommand.ExecuteNonQuery();
+                    runningThreads--;
                     fullCommand.Dispose();
                 }
             });
+            runningThreads++;
             thread.Start();
+
+            committed = true;
+        }
+
+        public static void WaitForTasks()
+        {
+            while (runningThreads > 0)
+            {
+                System.Threading.Thread.Sleep(10);
+            }
         }
     }
 }
