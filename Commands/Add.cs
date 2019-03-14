@@ -23,7 +23,6 @@ namespace Titanoboa
             var transaction = TransactionHelper.CreateTransaction(user, null, "ADD", amount);
 
             TransactionHelper.UpdateUserBalance(ref user, newBalance);
-        } 
-
+        }
     }
 }

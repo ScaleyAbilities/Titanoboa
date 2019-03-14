@@ -16,9 +16,9 @@ namespace Titanoboa
         private static IModel rabbitChannel;
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
-        private static string rabbitCommandQueue = "commands";
+        public static string rabbitCommandQueue = "commands";
         private static string rabbitTriggerTxQueue = "triggerTx";
-        private static string rabbitTriggerRxQueue = "triggerRx";
+        public static string rabbitTriggerRxQueue = "triggerRx";
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -80,7 +80,7 @@ namespace Titanoboa
             rabbitProperties.Persistent = true;
         }
 
-        public static void CreateConsumer(Action<JObject> messageCallback)
+        public static void CreateConsumer(Action<JObject> messageCallback, String queue)
         {
             var consumer = new EventingBasicConsumer(rabbitChannel);
             consumer.Received += (model, ea) =>
@@ -104,14 +104,7 @@ namespace Titanoboa
 
             // This will begin consuming messages asynchronously
             rabbitChannel.BasicConsume(
-                queue: rabbitCommandQueue,
-                autoAck: false,
-                consumer: consumer
-            );
-
-            // This will begin consuming messages asynchronously
-            rabbitChannel.BasicConsume(
-                queue: rabbitTriggerRxQueue,
+                queue: queue,
                 autoAck: false,
                 consumer: consumer
             );

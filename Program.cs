@@ -19,7 +19,7 @@ namespace Titanoboa
             try
             {
                 ParamHelper.ValidateParamsExist(json, "cmd", "usr");
-            }                
+            }
             catch (ArgumentException ex)
             {
                 Console.Error.WriteLine($"Error in Queue JSON: {ex.Message}");
@@ -44,7 +44,7 @@ namespace Titanoboa
             using (var transaction = SqlHelper.StartTransaction())
             {
                 string error = null;
-                try 
+                try
                 {
                     switch (CurrentCommand)
                     {
@@ -81,6 +81,9 @@ namespace Titanoboa
                         case "CANCEL_SET_BUY":
                             Commands.CancelSetBuy(username, commandParams);
                             break;
+                        case "COMMIT_BUY_TRIGGER":
+                            Commands.CommitBuyTrigger(username, commandParams);
+                            break;
                         case "SET_SELL_AMOUNT":
                             Commands.SetSellAmount(username, commandParams);
                             break;
@@ -89,6 +92,9 @@ namespace Titanoboa
                             break;
                         case "CANCEL_SET_SELL":
                             Commands.CancelSetSell(username, commandParams);
+                            break;
+                        case "COMMIT_SELL_TRIGGER":
+                            Commands.CommitSellTrigger(username, commandParams);
                             break;
                         case "DUMPLOG":
                             Commands.Dumplog(username, commandParams);
@@ -139,9 +145,10 @@ namespace Titanoboa
         static async Task Main(string[] args)
         {
             SqlHelper.OpenSqlConnection();
-            RabbitHelper.CreateConsumer(RunCommands);
+            RabbitHelper.CreateConsumer(RunCommands, RabbitHelper.rabbitCommandQueue);
+            RabbitHelper.CreateConsumer(RunCommands, RabbitHelper.rabbitTriggerRxQueue);
             // TODO: Need to make rabbit queue for sending triggers to Twig
-            
+
             Console.WriteLine("Titanoboa running...");
 
             if (args.Contains("--no-input"))
@@ -150,8 +157,8 @@ namespace Titanoboa
                 {
                     await Task.Delay(int.MaxValue);
                 }
-            } 
-            else 
+            }
+            else
             {
                 Console.WriteLine("Press [enter] to exit.");
                 Console.ReadLine();

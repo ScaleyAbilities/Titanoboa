@@ -13,7 +13,7 @@ namespace Titanoboa
             1- Get current user
             2- Find the stock trigger entry in transaction table
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
-            3- Update spending balance, and number of stocks in transactions table
+            4- Update spending balance, and number of stocks in transactions table
          */
         public static void SetBuyTrigger(string username, JObject commandParams)
         {
