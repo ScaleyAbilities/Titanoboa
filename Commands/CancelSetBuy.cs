@@ -26,16 +26,13 @@ namespace Titanoboa
                 dynamic twigTrigger = new JObject();
 
                 // Populate JSON Object
-                twigTrigger.Id = existingBuyTrigger.Id;
                 twigTrigger.User = existingBuyTrigger.User;
-                twigTrigger.Command = "CANCEL_TRIGGER";
+                twigTrigger.Command = "CANCEL";
                 twigTrigger.StockSymbol = existingBuyTrigger.StockSymbol;
-                twigTrigger.StockAmount = existingBuyTrigger.StockAmount;
                 twigTrigger.StockPrice = existingBuyTrigger.StockPrice;
 
                 // TODO: Push twigTrigger to Rabbit Q
-
-                // Cancel transaction & log
+                
                 // IF ACK from twig 
                 if (true)
                 {
@@ -52,7 +49,7 @@ namespace Titanoboa
                 }
                 else
                 {
-                    throw new InvalidProgramException("The SELL trigger that is trying to be cancelled has already gone through!");
+                    throw new InvalidProgramException("The BUY_TRIGGER that is trying to be cancelled has already gone through!");
                 }
             }
             else

@@ -15,13 +15,13 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
             3- Update spending balance, and number of stocks in transactions table
          */
-        public static void SetBuyTrigger(string username, JObject commandParams) 
+        public static void SetBuyTrigger(string username, JObject commandParams)
         {
             ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
             // Unpack JObject
             var buyPrice = (decimal)commandParams["price"];
-            if(buyPrice == 0) 
+            if (buyPrice == 0)
             {
                 throw new InvalidOperationException("Can't have a buy price of 0.");
             }
@@ -33,40 +33,43 @@ namespace Titanoboa
             // Log command
             Program.Logger.LogCommand(user, buyPrice, stockSymbol);
 
-            var existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            
             // Make sure trigger was previously created
+            var existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (existingBuyTrigger == null)
             {
                 throw new InvalidOperationException("Can't set trigger: No existing trigger");
-            } 
+            }
             // Make sure the trigger hasn't already been set
-            else if(existingBuyTrigger.StockPrice == null) 
+            else if (existingBuyTrigger.StockPrice == null)
             {
                 throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
-            } 
+            }
             // Make sure the trigger's amount was set
-            else if(existingBuyTrigger.StockAmount == null)
+            else if (existingBuyTrigger.StockAmount == null)
             {
                 throw new InvalidOperationException("Can't set trigger: Trigger amount was never set!");
             }
-
-            // Update the transaction price
-            TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, buyPrice);
 
             // Send new trigger to Twig
             dynamic twigTrigger = new JObject();
 
             // Populate JSON Object
-            twigTrigger.Id = existingBuyTrigger.Id;
             twigTrigger.User = existingBuyTrigger.User;
-            twigTrigger.Command = "BUY_TRIGGER";
+            twigTrigger.Command = "BUY";
             twigTrigger.StockSymbol = existingBuyTrigger.StockSymbol;
-            twigTrigger.StockAmount = existingBuyTrigger.StockAmount;
             twigTrigger.StockPrice = buyPrice;
 
             // TODO: Push twigTrigger to Rabbit Q
 
-        } 
+            if (true) // TODO: IF ACK
+            {
+                // Update the transaction price
+                TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, buyPrice);
+            }
+            else
+            {
+                throw new InvalidProgramException("The SELL_TRIGGER that is trying to be set already exist in trigger server, but not in the database!");
+            }
+        }
     }
 }
