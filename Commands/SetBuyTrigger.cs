@@ -21,12 +21,16 @@ namespace Titanoboa
 
             // Unpack JObject
             var buyPrice = (decimal)commandParams["price"];
+            if(buyPrice == 0) 
+            {
+                throw new InvalidOperationException("Can't have a buy price of 0.");
+            }
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
 
-            // Log 
+            // Log command
             Program.Logger.LogCommand(user, buyPrice, stockSymbol);
 
             var buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
@@ -44,9 +48,8 @@ namespace Titanoboa
             // Make sure the trigger's amount was set
             else if(buyTrigger.StockAmount == null)
             {
-                throw new InvalidCastException("Can't set trigger: Trigger amonut was never set!");
+                throw new InvalidOperationException("Can't set trigger: Trigger amount was never set!");
             }
-
 
             // Update the transaction price
             TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);

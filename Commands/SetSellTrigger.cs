@@ -29,13 +29,23 @@ namespace Titanoboa
             Program.Logger.LogCommand(user, sellPrice, stockSymbol);
 
             // Get the existing trigger to find amount in $$ the user wants to sell of their stock
-            var existingTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (existingTrigger == null)
+            var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (existingSellTrigger == null)
             {
                 throw new InvalidOperationException("No existing trigger");
+            }            
+            // Make sure the trigger hasn't already been set
+            else if(existingSellTrigger.StockPrice == null) 
+            {
+                throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
+            } 
+            // Make sure the trigger's amount was set
+            else if(existingSellTrigger.StockAmount == null)
+            {
+                throw new InvalidOperationException("Can't set trigger: Trigger amount was never set!");
             }
 
-            var sellAmount = existingTrigger.BalanceChange;
+            var sellAmount = existingSellTrigger.BalanceChange;
 
             if (sellAmount == 0)
             {
@@ -55,7 +65,20 @@ namespace Titanoboa
             var newUserStockAmount = userStockAmount - numStockToSell;
             TransactionHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
 
-            TransactionHelper.SetTransactionStockPrice(ref existingTrigger, sellPrice);
+            TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, sellPrice);
+
+            // Send new trigger to Twig
+            dynamic twigTrigger = new JObject();
+
+            // Populate JSON Object
+            twigTrigger.Id = existingSellTrigger.Id;
+            twigTrigger.User = existingSellTrigger.User;
+            twigTrigger.Command = "SELL_TRIGGER";
+            twigTrigger.StockSymbol = existingSellTrigger.StockSymbol;
+            twigTrigger.StockAmount = existingSellTrigger.StockAmount;
+            twigTrigger.StockPrice = sellPrice;
+
+            // TODO: Push twigTrigger to Rabbit Q
         } 
     }
 }
