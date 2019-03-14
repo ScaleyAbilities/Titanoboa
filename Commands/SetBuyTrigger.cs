@@ -26,15 +26,44 @@ namespace Titanoboa
             // Get users current balance
             var user = TransactionHelper.GetUser(username, true);
 
+            // Log 
             Program.Logger.LogCommand(user, buyPrice, stockSymbol);
 
             var buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            
+            // Make sure trigger was previously created
             if (buyTrigger == null)
             {
-                throw new InvalidOperationException("No existing trigger");
+                throw new InvalidOperationException("Can't set trigger: No existing trigger");
+            } 
+            // Make sure the trigger hasn't already been set
+            else if(buyTrigger.StockPrice == null) 
+            {
+                throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
+            } 
+            // Make sure the trigger's amount was set
+            else if(buyTrigger.StockAmount == null)
+            {
+                throw new InvalidCastException("Can't set trigger: Trigger amonut was never set!");
             }
 
+
+            // Update the transaction price
             TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
+
+            // Send new trigger to Twig
+            dynamic twigTrigger = new JObject();
+
+            // Populate JSON Object
+            twigTrigger.Id = buyTrigger.Id;
+            twigTrigger.User = buyTrigger.User;
+            twigTrigger.Command = "BUY_TRIGGER";
+            twigTrigger.StockSymbol = buyTrigger.StockSymbol;
+            twigTrigger.StockAmount = buyTrigger.StockAmount;
+            twigTrigger.StockPrice = buyPrice;
+
+            // TODO: Push twigTrigger to Rabbit Q
+
         } 
     }
 }

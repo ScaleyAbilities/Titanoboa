@@ -140,6 +140,7 @@ namespace Titanoboa
         {
             SqlHelper.OpenSqlConnection();
             RabbitHelper.CreateConsumer(RunCommands);
+            // TODO: Need to make rabbit queue for sending triggers to Twig
             
             Console.WriteLine("Titanoboa running...");
 
