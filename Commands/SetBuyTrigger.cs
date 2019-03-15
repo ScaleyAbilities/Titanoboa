@@ -1,69 +1,70 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
             Set Buy Trigger command flow:
             1- Get current user
             2- Find the stock trigger entry in transaction table
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
-            3- Update spending balance, and number of stocks in transactions table
+            4- Update spending balance, and number of stocks in transactions table
          */
-        public static void SetBuyTrigger(string username, JObject commandParams) 
+        public async Task SetBuyTrigger()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
+            CheckParams("price", "stock");
 
-            // Unpack JObject
+            // Get params
+            var user = await databaseHelper.GetUser(username, true);
             var buyPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            // Get users current balance
-            var user = TransactionHelper.GetUser(username, true);
-
             // Log 
-            Program.Logger.LogCommand(user, buyPrice, stockSymbol);
+            logger.LogCommand(user, buyPrice, stockSymbol);
 
-            var buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            
-            // Make sure trigger was previously created
-            if (buyTrigger == null)
+            // Can't have buy price of 0
+            if (buyPrice == 0)
             {
-                throw new InvalidOperationException("Can't set trigger: No existing trigger");
-            } 
-            // Make sure the trigger hasn't already been set
-            else if(buyTrigger.StockPrice == null) 
-            {
-                throw new InvalidOperationException("Can't set trigger: Trigger was already set!");
-            } 
-            // Make sure the trigger's amount was set
-            else if(buyTrigger.StockAmount == null)
-            {
-                throw new InvalidCastException("Can't set trigger: Trigger amonut was never set!");
+                throw new InvalidOperationException("Can't have a buy price of 0.");
             }
 
+            var buyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            // Make sure trigger was previously created
+            var existingBuyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (existingBuyTrigger == null)
+            {
+                throw new InvalidOperationException("Can't set BUY_TRIGGER: No existing trigger");
+            }
+
+            // Make sure the trigger hasn't already been set
+            if (existingBuyTrigger.StockPrice != null || existingBuyTrigger.StockAmount != null)
+            {
+                throw new InvalidOperationException("Can't set BUY_TRIGGER: Trigger was already set!");
+            }
+
+            // Find amount in $$ the user wants to buy of the stock
+            var buyAmountInDollars = existingBuyTrigger.BalanceChange;
+            if (buyAmountInDollars <= 0)
+            {
+                throw new InvalidOperationException("Can't set BUY_TRIGGER: Trigger dollars amount was never set!");
+            }
 
             // Update the transaction price
-            TransactionHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
+            await databaseHelper.SetTransactionStockPrice(existingBuyTrigger, buyPrice);
 
             // Send new trigger to Twig
-            dynamic twigTrigger = new JObject();
-
-            // Populate JSON Object
-            twigTrigger.Id = buyTrigger.Id;
-            twigTrigger.User = buyTrigger.User;
-            twigTrigger.Command = "BUY_TRIGGER";
-            twigTrigger.StockSymbol = buyTrigger.StockSymbol;
-            twigTrigger.StockAmount = buyTrigger.StockAmount;
-            twigTrigger.StockPrice = buyPrice;
-
-            // TODO: Push twigTrigger to Rabbit Q
-
-        } 
+            JObject twigTrigger = new JObject();
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "SELL");
+            twigParams.Add("stock", existingBuyTrigger.StockSymbol);
+            twigParams.Add("price", buyPrice);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
+        }
     }
 }

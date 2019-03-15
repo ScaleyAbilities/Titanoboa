@@ -1,55 +1,43 @@
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 
 namespace Titanoboa
 {
     public static class SqlHelper
     {
-        private static MySqlConnection connection;
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
-        private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
+        private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;Enlist=false";
 
-        public static void OpenSqlConnection()
+        public static async Task<NpgsqlConnection> GetConnection()
         {
-            connection = new MySqlConnection(connectionString);
+            var connection = new NpgsqlConnection(connectionString);
 
             var connected = false;
             while (!connected)
             {
                 try
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     connected = true;
                 }
-                catch (MySqlException ex)
+                catch (DbException ex)
                 {
-                    Console.Error.WriteLine($"Unable to connect to Database, retrying... ({ex.Message})");
-                    Thread.Sleep(3000);
+                    Console.Error.WriteLine($"\n!!!!! Unable to connect to Database, retrying... ({ex.Message})\n");
+                    await Task.Delay(1000);
                 }
             }
+
+            return connection;
         }
 
-        public static bool CloseSqlConnection()
+        public static NpgsqlCommand GetCommand(DbConnection connection)
         {
-            connection.Close();
-            Console.WriteLine("Done.");
-            return true;
-        }
-
-        public static MySqlCommand CreateSqlCommand()
-        {
-            MySqlCommand command = new MySqlCommand();
-            command.Connection = connection;
-            return command;
-        }
-
-        public static MySqlTransaction StartTransaction()
-        {
-            return connection.BeginTransaction();
+            return new NpgsqlCommand(null, (NpgsqlConnection)connection);
         }
 
         public static int? ConvertToNullableInt32(object num)

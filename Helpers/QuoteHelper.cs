@@ -3,7 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using System.Collections.Generic;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -16,11 +17,11 @@ namespace Titanoboa
         // Quote server url
         private static string quoteServer = "quoteserve.seng.uvic.ca";
 
-        private static Dictionary<string, Tuple<decimal, DateTime>> quoteCache = new Dictionary<string, Tuple<decimal, DateTime>>();
+        private static ConcurrentDictionary<string, Tuple<decimal, DateTime>> quoteCache = new ConcurrentDictionary<string, Tuple<decimal, DateTime>>();
 
         private static bool usingQuoteSrv = Environment.GetEnvironmentVariable("USING_QUOTE_SRV") == "TRUE" ? true : false;
 
-        public static decimal GetQuote(User user, string stockSymbol) {
+        public static async Task<decimal> GetQuote(User user, string stockSymbol, Logger logger) {
             if(!usingQuoteSrv)
                 return 10.00m;
 
@@ -33,37 +34,32 @@ namespace Titanoboa
             
             if (cachedQuote == null) {
                 Console.WriteLine($"Quote Cache Miss: {stockSymbol}");
-                var amount = GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint);
+                var amount = await GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint, logger);
                 return amount;
             }
 
             if (cachedQuote.Item2.AddMinutes(1) <= DateTime.Now) {
-                Thread thread = null;
-                thread = new Thread(() => {
-                    GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint);
-                });
-
+                _ = GetQuoteFromQuoteServer(user, stockSymbol, ipHostInfo, ipAddress, remoteEndPoint, logger);
                 quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(quoteCache[stockSymbol].Item1, DateTime.Now);
-                thread.Start();
             }
 
             return cachedQuote.Item1;
         }
         
-        private static decimal GetQuoteFromQuoteServer(User user, string stockSymbol, IPHostEntry ipHostInfo, IPAddress ipAddress, IPEndPoint remoteEndPoint)
+        private static async Task<decimal> GetQuoteFromQuoteServer(User user, string stockSymbol, IPHostEntry ipHostInfo, IPAddress ipAddress, IPEndPoint remoteEndPoint, Logger logger)
         {
             decimal amount;
             
             using (var skt = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp))
             {
-                skt.Connect(remoteEndPoint);
+                await skt.ConnectAsync(remoteEndPoint);
                 Console.WriteLine("Socket connected to {0}",  skt.RemoteEndPoint.ToString());
 
                 var bytes = new byte[1024];
                 var msg = Encoding.ASCII.GetBytes($"{stockSymbol},{user.Username}\n");
 
-                var bytesSent = skt.Send(msg);
-                var bytesRecv = skt.Receive(bytes);
+                var bytesSent = await SocketTaskExtensions.SendAsync(skt, msg, SocketFlags.None);
+                var bytesRecv = await SocketTaskExtensions.ReceiveAsync(skt, bytes, SocketFlags.None);
 
                 var msgRecv = Encoding.UTF8.GetString(bytes).Replace("\0", string.Empty).Trim();
                 var recv = msgRecv.Split(',');
@@ -76,9 +72,7 @@ namespace Titanoboa
                 var timestamp = recv[3];
                 var cryptokey = recv[4];
 
-                var logger = new Logger();
                 logger.LogQuoteServer(user, amount, quoteStockSymbol, quoteUserId, timestamp, cryptokey);
-                logger.CommitLogs();
             }
 
             quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(amount, DateTime.Now);

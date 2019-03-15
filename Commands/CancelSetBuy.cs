@@ -1,35 +1,46 @@
+using System;
+using System.Data;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void CancelSetBuy(string username, JObject commandParams) {
-            ParamHelper.ValidateParamsExist(commandParams, "stock");
+        public async Task CancelSetBuy()
+        {
+            CheckParams("stock");
 
             // Unpack JObject
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get user
-            var user = TransactionHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
 
-            Program.Logger.LogCommand(user, null, stockSymbol);
+            logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
-            var existingSetBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            if (existingSetBuyTrigger != null)
+            var existingSetBuyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (existingSetBuyTrigger == null)
             {
-                var refund = existingSetBuyTrigger.BalanceChange;
-
-                // Refund user
-                var newBalance = user.Balance + refund;
-                TransactionHelper.UpdateUserBalance(ref user, newBalance);
-
-                // Cancel transaction
-                TransactionHelper.DeleteTransaction(existingSetBuyTrigger);
+                throw new InvalidOperationException("Can't cancel BUY_TRIGGER: Trigger doesn't exist");
             }
-            
+            else if (existingSetBuyTrigger.Type == "completed")
+            {
+                throw new InvalidOperationException("Can't cancel BUY_TRIGGER: Trigger has already gone through!");
+            }
+
+            // Cancel transaction
+            await databaseHelper.DeleteTransaction(existingSetBuyTrigger);
+
+            // Send new trigger to Twig
+            JObject twigTrigger = new JObject();
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "CANCEL_BUY");
+            twigParams.Add("stock", existingSetBuyTrigger.StockSymbol);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
         }
-        
     }
 }

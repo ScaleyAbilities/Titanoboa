@@ -1,37 +1,45 @@
+using System;
+using System.Data;
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void CancelSetSell(string username, JObject commandParams) {
-            ParamHelper.ValidateParamsExist(commandParams, "stock");
+        public async Task CancelSetSell() {
+            CheckParams("stock");
 
             // Unpack JObject
             var stockSymbol = commandParams["stock"].ToString();
 
             //  Get user
-            var user = TransactionHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
 
-            Program.Logger.LogCommand(user, null, stockSymbol);
+            logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
-            var existingSetSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (existingSetSellTrigger != null)
+            var existingSetSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (existingSetSellTrigger == null)
             {
-                var refundedStocks = existingSetSellTrigger.StockAmount ?? 0;
-
-                // Get users stocks
-                var numUserStocks = TransactionHelper.GetStocks(user, stockSymbol);
-
-                // Refund user
-                var newUserStocks = numUserStocks + refundedStocks;
-                TransactionHelper.UpdateStocks(user, stockSymbol, newUserStocks);
-
-                // Cancel transaction & log
-                TransactionHelper.DeleteTransaction(existingSetSellTrigger);
+                throw new InvalidOperationException("Can't cancel SELL_TRIGGER: Trigger doesn't exist");
             }
+            else if (existingSetSellTrigger.Type == "completed")
+            {
+                throw new InvalidOperationException("Can't cancel SELL_TRIGGER: Trigger has already gone through!");
+            }
+
+            // Cancel transaction
+            await databaseHelper.DeleteTransaction(existingSetSellTrigger);
+
+            // Send new trigger to Twig
+            JObject twigTrigger = new JObject();
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "CANCEL_SELL");
+            twigParams.Add("stock", existingSetSellTrigger.StockSymbol);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
         }
-        
     }
 }

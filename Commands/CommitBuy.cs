@@ -1,9 +1,9 @@
-using MySql.Data.MySqlClient;
 using System;
+using System.Threading.Tasks;
 
 namespace Titanoboa
 {
-    public static partial class Commands 
+    public partial class CommandHandler 
     {
         /*
             CommitBuy command flow:
@@ -12,28 +12,28 @@ namespace Titanoboa
             3- Add stock amounts
             3- Update buy in transactions table, *set pending flag to false, and update timestamp*
          */
-        public static void CommitBuy(string username) {
-            var user = TransactionHelper.GetUser(username, false);
+        public async Task CommitBuy() {
+            var user = await databaseHelper.GetUser(username, false);
 
-            Program.Logger.LogCommand(user);
+            logger.LogCommand(user);
             
-            var transaction = TransactionHelper.GetLatestPendingTransaction(user, "BUY");
+            var transaction = await databaseHelper.GetLatestPendingTransaction(user, "BUY");
             if (transaction == null)
             {
                 throw new InvalidOperationException("No pending BUY transactions to commit.");
             }
 
             var newBalance = user.Balance - Math.Abs(transaction.BalanceChange);
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
+            await databaseHelper.UpdateUserBalance(user, newBalance);
 
             var stockName = transaction.StockSymbol;
             var stockAmount = transaction.StockAmount;
 
-            var userStockAmount = TransactionHelper.GetStocks(user, stockName);
+            var userStockAmount = await databaseHelper.GetStocks(user, stockName);
             var newStockAmount = (stockAmount ?? 0) + userStockAmount;
 
-            TransactionHelper.UpdateStocks(user, stockName, newStockAmount);
-            TransactionHelper.CommitTransaction(ref transaction);
+            await databaseHelper.UpdateStocks(user, stockName, newStockAmount);
+            await databaseHelper.CommitTransaction(transaction);
         }
     }
 }

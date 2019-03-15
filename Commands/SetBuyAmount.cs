@@ -1,42 +1,46 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void SetBuyAmount(string username, JObject commandParams)
+        public async Task SetBuyAmount()
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username, true);
-            var amount = (decimal)commandParams["amount"];
+            var user = await databaseHelper.GetUser(username, true);
+            var buyAmountInDollars = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            Program.Logger.LogCommand(user, amount, stockSymbol);
-            
-            // Not enough funds for trigger
-            if (user.PendingBalance < amount)
-            {
-                throw new InvalidOperationException("Insufficient funds for SET_BUY_AMOUNT.");  
-            } 
+            logger.LogCommand(user, buyAmountInDollars, stockSymbol);
 
-            // Reserve funds for trigger
-            var newBalance = user.Balance - amount;
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
+            // Doesn't make sense to buy 0$ worth of stocks
+            if (buyAmountInDollars == 0)
+            {
+                throw new System.InvalidOperationException("Cannot buy 0 dollars worth of stocks.");
+            }
+
+            // Not enough funds for trigger
+            if (user.PendingBalance < buyAmountInDollars)
+            {
+                throw new InvalidOperationException("Insufficient funds for SET_BUY_AMOUNT.");
+            }          
 
             // Check if existing trigger exists and update amount, else create new trigger
-            Transaction buyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
-            if (buyTrigger != null)
+            var existingBuyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            if (existingBuyTrigger != null)
             {
-                var newAmount = buyTrigger.BalanceChange + amount;
-                TransactionHelper.SetTransactionBalanceChange(ref buyTrigger, newAmount);
+                var newBuyAmountInDollars = existingBuyTrigger.BalanceChange + buyAmountInDollars;
+                await databaseHelper.SetTransactionBalanceChange(existingBuyTrigger, newBuyAmountInDollars);
             }
             else
             {
-                buyTrigger = TransactionHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", amount, null, null, "trigger");
+                // Create transaction with stockAmount = null, stockPrice = null
+                await databaseHelper.CreateTransaction(user, stockSymbol, "BUY_TRIGGER", buyAmountInDollars, null, null, "pending");
             }
         }
     }

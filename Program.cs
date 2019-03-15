@@ -1,164 +1,162 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading.Tasks;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading;
 using Newtonsoft.Json.Linq;
+using Npgsql;
 
 namespace Titanoboa
 {
     class Program
     {
         internal static readonly string ServerName = Environment.GetEnvironmentVariable("SERVER_NAME") ?? "Titanoboa";
-        internal static Logger Logger = null;
-        internal static string CurrentCommand = null;
 
-        static void RunCommands(JObject json)
+        internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
+        internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
+        private static long nextTaskId = 0;
+
+        static async Task RunCommands(long taskId, JObject json)
         {
             try
             {
                 ParamHelper.ValidateParamsExist(json, "cmd", "usr");
-            }                
+            }
             catch (ArgumentException ex)
             {
                 Console.Error.WriteLine($"Error in Queue JSON: {ex.Message}");
                 return;
             }
 
-            CurrentCommand = json["cmd"].ToString().ToUpper();
+            string command = json["cmd"].ToString().ToUpper();
             string username = json["usr"].ToString();
             JObject commandParams = (JObject)json["params"];
+            Logger logger;
 
             try
             {
                 // Set up a logger for this unit of work
-                Logger = new Logger();
+                logger = new Logger();
+                await logger.Init(command);
             }
-            catch (MySqlException ex)
+            catch (DbException ex)
             {
                 Console.Error.WriteLine($"Unable to create logger due to SQL error: {ex.Message}");
                 return;
             }
 
-            using (var transaction = SqlHelper.StartTransaction())
+            using (var connection = await SqlHelper.GetConnection())
+            using (var dbHelper = new DatabaseHelper(connection, logger))
             {
                 string error = null;
-                try 
+                int errorLevel = 0; // 0 = lowest, 2 = highest
+                var commandHandler = new CommandHandler(username, command, commandParams, dbHelper, logger, taskId);
+                try
                 {
-                    switch (CurrentCommand)
-                    {
-                        case "QUOTE":
-                            Commands.Quote(username, commandParams);
-                            break;
-                        case "ADD":
-                            Commands.Add(username, commandParams);
-                            break;
-                        case "BUY":
-                            Commands.Buy(username, commandParams);
-                            break;
-                        case "COMMIT_BUY":
-                            Commands.CommitBuy(username);
-                            break;
-                        case "CANCEL_BUY":
-                            Commands.CancelBuy(username);
-                            break;
-                        case "SELL":
-                            Commands.Sell(username, commandParams);
-                            break;
-                        case "COMMIT_SELL":
-                            Commands.CommitSell(username);
-                            break;
-                        case "CANCEL_SELL":
-                            Commands.CancelSell(username);
-                            break;
-                        case "SET_BUY_AMOUNT":
-                            Commands.SetBuyAmount(username, commandParams);
-                            break;
-                        case "SET_BUY_TRIGGER":
-                            Commands.SetBuyTrigger(username, commandParams);
-                            break;
-                        case "CANCEL_SET_BUY":
-                            Commands.CancelSetBuy(username, commandParams);
-                            break;
-                        case "SET_SELL_AMOUNT":
-                            Commands.SetSellAmount(username, commandParams);
-                            break;
-                        case "SET_SELL_TRIGGER":
-                            Commands.SetSellTrigger(username, commandParams);
-                            break;
-                        case "CANCEL_SET_SELL":
-                            Commands.CancelSetSell(username, commandParams);
-                            break;
-                        case "DUMPLOG":
-                            Commands.Dumplog(username, commandParams);
-                            break;
-                        case "DISPLAY_SUMMARY":
-                            Commands.DisplaySummary(username);
-                            break;
-                        default:
-                            Console.Error.WriteLine($"Unknown command '{CurrentCommand}'");
-                            break;
-                    }
-
-                    Logger.CommitLogs();
-                    transaction.Commit();
+                    await commandHandler.Run();
+                    await logger.CommitLogs();
                 }
                 catch (ArgumentException ex)
                 {
-                    error = $"Invalid parameters for command '{CurrentCommand}': {ex.Message}";
+                    error = $"Invalid parameters for command '{command}': {ex.Message}";
+                    errorLevel = 1;
                 }
                 catch (InvalidOperationException ex)
                 {
-                    error = $"Command '{CurrentCommand}' could not be run: {ex.Message}";
+                    error = $"Command '{command}' could not be run: {ex.Message}";
+                    errorLevel = 0;
                 }
-                catch (MySqlException ex)
+                catch (DbException ex)
                 {
                     error = $"!!!SQL ERROR!!! {ex.Message}";
+                    errorLevel = 2;
                 }
                 catch (Exception ex)
                 {
                     error = $"!!!UNEXPECTED ERROR!!! {ex.Message}";
+                    errorLevel = 2;
                 }
 
                 if (error != null)
                 {
-                    Console.Error.WriteLine(error);
-                    transaction.Rollback();
-                    Logger = new Logger();
-                    Logger.LogEvent(Logger.EventType.Error, error);
-                    Logger.CommitLogs();
+                    if (errorLevel > 0) // Only print unexpected errors
+                        Console.Error.WriteLine(error);
+
+                    logger = new Logger();
+                    await logger.Init(command);
+                    logger.LogEvent(Logger.EventType.Error, error);
+                    await logger.CommitLogs();
                 }
             }
-
-            // Clear the logger now that we are done this unit of work
-            Logger = null;
-            CurrentCommand = null;
         }
 
         static async Task Main(string[] args)
         {
-            SqlHelper.OpenSqlConnection();
-            RabbitHelper.CreateConsumer(RunCommands);
-            // TODO: Need to make rabbit queue for sending triggers to Twig
+            var quitSignalled = new TaskCompletionSource<bool>();
+            Console.CancelKeyPress += new ConsoleCancelEventHandler((sender, eventArgs) => {
+                quitSignalled.SetResult(true);
+                eventArgs.Cancel = true; // Prevent program from quitting right away
+            });
+            
+            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitCommandQueue);
+            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerRxQueue);
             
             Console.WriteLine("Titanoboa running...");
+            Console.WriteLine("Press Ctrl-C to exit.");
 
-            if (args.Contains("--no-input"))
+            while (true)
             {
-                while (true)
-                {
-                    await Task.Delay(int.MaxValue);
-                }
-            } 
-            else 
-            {
-                Console.WriteLine("Press [enter] to exit.");
-                Console.ReadLine();
+                var completed = await Task.WhenAny(quitSignalled.Task, Task.Delay(5000));
+
+                if (completed == quitSignalled.Task)
+                    break;
+
+                // We clean up finished tasks every 5 seconds
+                CleanupFinishedTasks();
             }
 
-            //Close connection
-            SqlHelper.CloseSqlConnection();
+            Console.WriteLine("Quitting...");
+            Console.WriteLine("Waiting for running tasks to complete...");
+
+            while (!runningTasks.IsEmpty)
+            {
+                (long id, Task task) taskEntry = (0, null);
+                runningTasks.TryDequeue(out taskEntry);
+                if (taskEntry.task != null)
+                    await taskEntry.task;
+            }
+
+            Console.WriteLine("Done.");
+            Environment.Exit(0);
+        }
+
+        public static async Task WaitForTasksUpTo(long id)
+        {
+            (long id, Task task) taskEntry = (0, null);
+            while (runningTasks.TryPeek(out taskEntry) && taskEntry.id != id)
+            {
+                runningTasks.TryDequeue(out taskEntry);
+                await taskEntry.task;
+            }
+        }
+
+        private static void CleanupFinishedTasks()
+        {
+            (long id, Task task) taskEntry = (0, null);
+            while (runningTasks.TryPeek(out taskEntry) && taskEntry.task.IsCompleted)
+            {
+                runningTasks.TryDequeue(out taskEntry);
+            }
+        }
+
+        private static Task RabbitConsumer(JObject json)
+        {
+            var id = nextTaskId++;
+            var task = RunCommands(id, json);
+            runningTasks.Append((id, task));
+            return task;
         }
     }
 }

@@ -1,9 +1,10 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
             CommitSell command flow:
@@ -12,29 +13,29 @@ namespace Titanoboa
             3- Remove stock amounts
             3- Update buy in transactions table, *set pending flag to false, and update timestamp*
          */
-        public static void CommitSell(string username)
+        public async Task CommitSell()
         {
-            var user = TransactionHelper.GetUser(username, false);
+            var user = await databaseHelper.GetUser(username, false);
             
-            Program.Logger.LogCommand(user);
+            logger.LogCommand(user);
 
-            var transaction = TransactionHelper.GetLatestPendingTransaction(user, "SELL");
+            var transaction = await databaseHelper.GetLatestPendingTransaction(user, "SELL");
             if (transaction == null)
             {
                 throw new InvalidOperationException("No pending SELL transactions to commit.");
             }
 
             var newBalance = user.Balance + Math.Abs(transaction.BalanceChange);
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
+            await databaseHelper.UpdateUserBalance(user, newBalance);
 
             var stockName = transaction.StockSymbol;
             var stockAmount = transaction.StockAmount ?? 0;
    
-            var userStockAmount = TransactionHelper.GetStocks(user, stockName);
+            var userStockAmount = await databaseHelper.GetStocks(user, stockName);
             var newStockAmount = userStockAmount - stockAmount;
 
-            TransactionHelper.UpdateStocks(user, stockName, newStockAmount);
-            TransactionHelper.CommitTransaction(ref transaction);
+            await databaseHelper.UpdateStocks(user, stockName, newStockAmount);
+            await databaseHelper.CommitTransaction(transaction);
         }
     }
 }

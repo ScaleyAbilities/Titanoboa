@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
@@ -16,16 +17,20 @@ namespace Titanoboa
         private static IModel rabbitChannel;
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
-        private static string rabbitCommandQueue = "commands";
+        public static string rabbitCommandQueue = "commands";
+        private static string rabbitTriggerTxQueue = "triggerPending";
+        public static string rabbitTriggerRxQueue = "triggerCompleted";
         private static IBasicProperties rabbitProperties;
 
-        static RabbitHelper() 
+        static RabbitHelper()
         {
             // Ensure Rabbit Queue is set up
-            var factory = new ConnectionFactory() { 
+            var factory = new ConnectionFactory()
+            {
                 HostName = rabbitHost,
                 UserName = "scaley",
-                Password = "abilities"
+                Password = "abilities",
+                DispatchConsumersAsync = true,
             };
 
             // Try connecting to rabbit until it works
@@ -43,7 +48,7 @@ namespace Titanoboa
                     Thread.Sleep(3000);
                 }
             }
-            
+
             rabbitChannel = rabbitConnection.CreateModel();
 
             rabbitChannel.QueueDeclare(
@@ -54,40 +59,66 @@ namespace Titanoboa
                 arguments: null
             );
 
+            rabbitChannel.QueueDeclare(
+                queue: rabbitTriggerTxQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+
+            rabbitChannel.QueueDeclare(
+                queue: rabbitTriggerRxQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+
             // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 10, global: false);
 
             rabbitProperties = rabbitChannel.CreateBasicProperties();
             rabbitProperties.Persistent = true;
         }
 
-        public static void CreateConsumer(Action<JObject> messageCallback)
+        public static void CreateConsumer(Func<JObject, Task> messageCallback, string queue)
         {
-            var consumer = new EventingBasicConsumer(rabbitChannel);
-            consumer.Received += (model, ea) =>
+            var consumer = new AsyncEventingBasicConsumer(rabbitChannel);
+            consumer.Received += async (model, eventArgs) =>
             {
                 JObject message = null;
-                try 
+                try
                 {
-                    message = JObject.Parse(Encoding.UTF8.GetString(ea.Body));
+                    message = JObject.Parse(Encoding.UTF8.GetString(eventArgs.Body));
                 }
                 catch (JsonReaderException ex)
                 {
                     Console.Error.WriteLine($"Unable to parse Queue message into JSON: {ex.Message}");
                 }
-                
+
                 if (message != null)
-                    messageCallback(message);
+                    await messageCallback(message);
 
                 // We will always ack even if we can't parse it otherwise queue will hang
-                rabbitChannel.BasicAck(ea.DeliveryTag, false);
+                rabbitChannel.BasicAck(eventArgs.DeliveryTag, false);
             };
 
             // This will begin consuming messages asynchronously
             rabbitChannel.BasicConsume(
-                queue: rabbitCommandQueue,
+                queue: queue,
                 autoAck: false,
                 consumer: consumer
+            );
+        }
+
+        public static void PushTrigger(JObject properties)
+        {
+            rabbitChannel.BasicPublish(
+                exchange: "",
+                routingKey: rabbitTriggerTxQueue,
+                basicProperties: rabbitProperties,
+                body: Encoding.UTF8.GetBytes(properties.ToString(Formatting.None))
             );
         }
     }
