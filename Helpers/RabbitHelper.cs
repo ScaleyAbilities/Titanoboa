@@ -17,8 +17,8 @@ namespace Titanoboa
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
         public static string rabbitCommandQueue = "commands";
-        private static string rabbitTriggerTxQueue = "triggerTx";
-        public static string rabbitTriggerRxQueue = "triggerRx";
+        private static string rabbitTriggerTxQueue = "triggerPending";
+        public static string rabbitTriggerRxQueue = "triggerCompleted";
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -110,7 +110,7 @@ namespace Titanoboa
             );
         }
 
-        public static void PushCommand(JObject properties)
+        public static void PushTrigger(JObject properties)
         {
             rabbitChannel.BasicPublish(
                 exchange: "",
