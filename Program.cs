@@ -13,16 +13,17 @@ namespace Titanoboa
     class Program
     {
         internal static readonly string ServerName = Environment.GetEnvironmentVariable("SERVER_NAME") ?? "Titanoboa";
-        
+
         internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
+        private static long nextTaskId = 0;
 
         static async Task RunCommands(long taskId, JObject json)
         {
             try
             {
                 ParamHelper.ValidateParamsExist(json, "cmd", "usr");
-            }                
+            }
             catch (ArgumentException ex)
             {
                 Console.Error.WriteLine($"Error in Queue JSON: {ex.Message}");
@@ -52,7 +53,7 @@ namespace Titanoboa
                 string error = null;
                 int errorLevel = 0; // 0 = lowest, 2 = highest
                 var commandHandler = new CommandHandler(username, command, commandParams, dbHelper, logger, taskId);
-                try 
+                try
                 {
                     await commandHandler.Run();
                     await logger.CommitLogs();
@@ -98,22 +99,15 @@ namespace Titanoboa
                 quitSignalled.SetResult(true);
                 eventArgs.Cancel = true; // Prevent program from quitting right away
             });
-
-            long nextTaskId = 0;
             
-            RabbitHelper.CreateConsumer((json) => {
-                var id = nextTaskId++;
-                var task = RunCommands(id, json);
-                runningTasks.Append((id, task));
-                return task;
-            });
-
-            // TODO: Need to make rabbit queue for sending triggers to Twig
+            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitCommandQueue);
+            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerRxQueue);
             
             Console.WriteLine("Titanoboa running...");
             Console.WriteLine("Press Ctrl-C to exit.");
 
-            while (true) {
+            while (true)
+            {
                 var completed = await Task.WhenAny(quitSignalled.Task, Task.Delay(5000));
 
                 if (completed == quitSignalled.Task)
@@ -125,7 +119,7 @@ namespace Titanoboa
 
             Console.WriteLine("Quitting...");
             Console.WriteLine("Waiting for running tasks to complete...");
-            
+
             while (!runningTasks.IsEmpty)
             {
                 (long id, Task task) taskEntry = (0, null);
@@ -148,11 +142,21 @@ namespace Titanoboa
             }
         }
 
-        private static void CleanupFinishedTasks() {
+        private static void CleanupFinishedTasks()
+        {
             (long id, Task task) taskEntry = (0, null);
-            while (runningTasks.TryPeek(out taskEntry) && taskEntry.task.IsCompleted) {
+            while (runningTasks.TryPeek(out taskEntry) && taskEntry.task.IsCompleted)
+            {
                 runningTasks.TryDequeue(out taskEntry);
             }
+        }
+
+        private static Task RabbitConsumer(JObject json)
+        {
+            var id = nextTaskId++;
+            var task = RunCommands(id, json);
+            runningTasks.Append((id, task));
+            return task;
         }
     }
 }

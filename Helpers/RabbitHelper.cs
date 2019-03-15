@@ -17,13 +17,16 @@ namespace Titanoboa
         private static IModel rabbitChannel;
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
-        private static string rabbitCommandQueue = "commands";
+        public static string rabbitCommandQueue = "commands";
+        private static string rabbitTriggerTxQueue = "triggerPending";
+        public static string rabbitTriggerRxQueue = "triggerCompleted";
         private static IBasicProperties rabbitProperties;
 
-        static RabbitHelper() 
+        static RabbitHelper()
         {
             // Ensure Rabbit Queue is set up
-            var factory = new ConnectionFactory() { 
+            var factory = new ConnectionFactory()
+            {
                 HostName = rabbitHost,
                 UserName = "scaley",
                 Password = "abilities",
@@ -45,11 +48,27 @@ namespace Titanoboa
                     Thread.Sleep(3000);
                 }
             }
-            
+
             rabbitChannel = rabbitConnection.CreateModel();
 
             rabbitChannel.QueueDeclare(
                 queue: rabbitCommandQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+
+            rabbitChannel.QueueDeclare(
+                queue: rabbitTriggerTxQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+
+            rabbitChannel.QueueDeclare(
+                queue: rabbitTriggerRxQueue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -63,13 +82,13 @@ namespace Titanoboa
             rabbitProperties.Persistent = true;
         }
 
-        public static void CreateConsumer(Func<JObject, Task> messageCallback)
+        public static void CreateConsumer(Func<JObject, Task> messageCallback, string queue)
         {
             var consumer = new AsyncEventingBasicConsumer(rabbitChannel);
             consumer.Received += async (model, eventArgs) =>
             {
                 JObject message = null;
-                try 
+                try
                 {
                     message = JObject.Parse(Encoding.UTF8.GetString(eventArgs.Body));
                 }
@@ -77,7 +96,7 @@ namespace Titanoboa
                 {
                     Console.Error.WriteLine($"Unable to parse Queue message into JSON: {ex.Message}");
                 }
-                
+
                 if (message != null)
                     await messageCallback(message);
 
@@ -87,9 +106,19 @@ namespace Titanoboa
 
             // This will begin consuming messages asynchronously
             rabbitChannel.BasicConsume(
-                queue: rabbitCommandQueue,
+                queue: queue,
                 autoAck: false,
                 consumer: consumer
+            );
+        }
+
+        public static void PushTrigger(JObject properties)
+        {
+            rabbitChannel.BasicPublish(
+                exchange: "",
+                routingKey: rabbitTriggerTxQueue,
+                basicProperties: rabbitProperties,
+                body: Encoding.UTF8.GetBytes(properties.ToString(Formatting.None))
             );
         }
     }

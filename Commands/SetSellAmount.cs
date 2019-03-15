@@ -13,21 +13,30 @@ namespace Titanoboa
 
             // Get params
             var user = await databaseHelper.GetUser(username, true);
-            var amount = (decimal)commandParams["amount"];
+            var sellAmountInDollars = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            logger.LogCommand(user, amount, stockSymbol);
-            
-            // Check if existing trigger exists
-            Transaction sellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (sellTrigger != null)
+            logger.LogCommand(user, sellAmountInDollars, stockSymbol);
+
+            // Doesn't make sense to have a sell amount of 0$
+            if (sellAmountInDollars == 0)
             {
-                var newAmount = sellTrigger.BalanceChange + amount;
-                await databaseHelper.SetTransactionBalanceChange(sellTrigger, newAmount);
+                throw new InvalidOperationException("Can't set a sell amount of 0");
+            }
+
+            // Check if existing trigger exists
+            var existingSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            if (existingSellTrigger != null)
+            {
+                var newSellAmountInDollars = existingSellTrigger.BalanceChange + sellAmountInDollars;
+
+                // If trigger has already been set, and this is an update on how much to buy
+                await databaseHelper.SetTransactionBalanceChange(existingSellTrigger, newSellAmountInDollars);
             }
             else
             {
-                sellTrigger = await databaseHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
+                // Create transaction with stockAmount = null, stockPrice = null
+                await databaseHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", sellAmountInDollars, null, null, "pending");
             }
         }
     }

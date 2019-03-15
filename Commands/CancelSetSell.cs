@@ -1,3 +1,5 @@
+using System;
+using System.Data;
 using Newtonsoft.Json.Linq;
 using System.Threading.Tasks;
 
@@ -18,21 +20,26 @@ namespace Titanoboa
 
             // Get trigger to cancel
             var existingSetSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
-            if (existingSetSellTrigger != null)
+            if (existingSetSellTrigger == null)
             {
-                var refundedStocks = existingSetSellTrigger.StockAmount ?? 0;
-
-                // Get users stocks
-                var numUserStocks = await databaseHelper.GetStocks(user, stockSymbol);
-
-                // Refund user
-                var newUserStocks = numUserStocks + refundedStocks;
-                await databaseHelper.UpdateStocks(user, stockSymbol, newUserStocks);
-
-                // Cancel transaction & log
-                await databaseHelper.DeleteTransaction(existingSetSellTrigger);
+                throw new InvalidOperationException("Can't cancel SELL_TRIGGER: Trigger doesn't exist");
             }
+            else if (existingSetSellTrigger.Type == "completed")
+            {
+                throw new InvalidOperationException("Can't cancel SELL_TRIGGER: Trigger has already gone through!");
+            }
+
+            // Cancel transaction
+            await databaseHelper.DeleteTransaction(existingSetSellTrigger);
+
+            // Send new trigger to Twig
+            JObject twigTrigger = new JObject();
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "CANCEL_SELL");
+            twigParams.Add("stock", existingSetSellTrigger.StockSymbol);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
         }
-        
     }
 }

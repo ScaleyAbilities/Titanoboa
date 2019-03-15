@@ -18,7 +18,7 @@ namespace Titanoboa
             this.logger = logger;
         }
 
-        public async Task<User> GetUser(string username, bool withPendingBalance = false) 
+        public async Task<User> GetUser(string username, bool withPendingBalance = false)
         {
             using (var command = GetCommand())
             {
@@ -28,7 +28,7 @@ namespace Titanoboa
                 }
                 else
                 {
-                    command.CommandText = 
+                    command.CommandText =
                         @"SELECT users.*, balance + COALESCE(pending_sum, 0) AS pending_balance
                         FROM users LEFT JOIN (
                             SELECT userid, SUM(balancechange) AS pending_sum FROM transactions
@@ -37,10 +37,10 @@ namespace Titanoboa
                         ) t ON t.userid = users.id
                         WHERE users.username = @username";
                 }
-                
+
                 command.Parameters.AddWithValue("@username", username);
                 await command.PrepareAsync();
-                
+
                 var reader = await command.ExecuteReaderAsync();
                 var createdNewUser = false;
                 if (!reader.HasRows)
@@ -54,7 +54,7 @@ namespace Titanoboa
                         createCommand.Parameters.AddWithValue("@username", username);
                         await createCommand.PrepareAsync();
                         await createCommand.ExecuteNonQueryAsync();
-                    }                    
+                    }
 
                     createdNewUser = true;
 
@@ -68,7 +68,8 @@ namespace Titanoboa
                 {
                     await reader.ReadAsync();
 
-                    user = new User() {
+                    user = new User()
+                    {
                         Id = Convert.ToInt64(reader["id"]),
                         Username = (string)reader["username"],
                         Balance = (decimal)reader["balance"]
@@ -84,7 +85,7 @@ namespace Titanoboa
 
                 if (createdNewUser)
                     logger.LogEvent(Logger.EventType.Debug, $"Created new user", user);
-                
+
                 return user;
             }
         }
@@ -98,7 +99,7 @@ namespace Titanoboa
                 command.Parameters.AddWithValue("@userid", user.Id);
                 await command.PrepareAsync();
                 await command.ExecuteNonQueryAsync();
-                
+
                 // Now that the balance has been updated, update the model
                 user.Balance = balance;
 
@@ -107,14 +108,15 @@ namespace Titanoboa
         }
 
         public async Task<Transaction> CreateTransaction(
-            User user, 
-            string stockSymbol, 
-            string commandText, 
+            User user,
+            string stockSymbol,
+            string commandText,
             decimal balanceChange = 0.00m,
-            int? stockAmount = null, 
-            decimal? stockPrice = null, 
+            int? stockAmount = null,
+            decimal? stockPrice = null,
             string type = "completed"
-        ) {
+        )
+        {
             using (var command = GetCommand())
             {
                 command.CommandText = @"INSERT INTO transactions (userid, stocksymbol, command, balancechange, stockamount, stockprice, type) 
@@ -131,7 +133,8 @@ namespace Titanoboa
                 await command.PrepareAsync();
                 var id = Convert.ToInt64(await command.ExecuteScalarAsync());
 
-                var transaction = new Transaction() {
+                var transaction = new Transaction()
+                {
                     Id = id,
                     User = user,
                     Command = commandText,
@@ -143,12 +146,13 @@ namespace Titanoboa
                 };
 
                 logger.LogTransaction(transaction);
-                
+
                 return transaction;
             }
         }
 
-        public async Task<Transaction> GetLatestPendingTransaction(User user, string commandText) {
+        public async Task<Transaction> GetLatestPendingTransaction(User user, string commandText)
+        {
             using (var command = GetCommand())
             {
                 command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
@@ -169,7 +173,8 @@ namespace Titanoboa
                     if (reader.HasRows)
                     {
                         await reader.ReadAsync();
-                        transaction = new Transaction() {
+                        transaction = new Transaction()
+                        {
                             Id = Convert.ToInt64(reader["id"]),
                             User = user,
                             Command = (string)reader["command"],
@@ -215,7 +220,7 @@ namespace Titanoboa
                                         AND command = @commandText
                                         AND type = 'trigger'
                                         LIMIT 1";
-                
+
                 command.Parameters.AddWithValue("@userid", user.Id);
                 command.Parameters.AddWithValue("@commandText", triggerType);
                 await command.PrepareAsync();
@@ -225,7 +230,8 @@ namespace Titanoboa
                     if (reader.HasRows)
                     {
                         await reader.ReadAsync();
-                        var transaction = new Transaction() {
+                        var transaction = new Transaction()
+                        {
                             Id = Convert.ToInt64(reader["id"]),
                             User = user,
                             Command = (string)reader["command"],
@@ -269,13 +275,31 @@ namespace Titanoboa
             {
                 command.CommandText = @"UPDATE transactions SET stockPrice = @stockPrice 
                                         WHERE id = @id";
-                
+
                 command.Parameters.AddWithValue("@stockPrice", stockPrice);
                 command.Parameters.AddWithValue("@id", transaction.Id);
                 await command.PrepareAsync();
                 await command.ExecuteNonQueryAsync();
 
                 transaction.StockPrice = stockPrice;
+
+                logger.LogTransaction(transaction);
+            }
+        }
+
+        public async Task SetTransactionNumStocks(Transaction transaction, int numStockToSell)
+        {
+            using (var command = GetCommand())
+            {
+                command.CommandText = @"UPDATE transactions SET stockAmount = @numStocksToSell 
+                                    WHERE id = @id";
+
+                command.Parameters.AddWithValue("@stockPrice", numStockToSell);
+                command.Parameters.AddWithValue("@id", transaction.Id);
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
+
+                transaction.StockAmount = numStockToSell;
 
                 logger.LogTransaction(transaction);
             }
@@ -291,7 +315,7 @@ namespace Titanoboa
                 }
                 else
                 {
-                    command.CommandText = 
+                    command.CommandText =
                         @"SELECT stocks.amount + COALESCE(pending_sum, 0) AS pending_balance
                           FROM stocks LEFT JOIN (
                               SELECT userid, SUM(stockamount) AS pending_sum FROM transactions
@@ -319,7 +343,7 @@ namespace Titanoboa
                         await createCommand.PrepareAsync();
                         await createCommand.ExecuteNonQueryAsync();
                     }
-                    
+
                     logger.LogEvent(Logger.EventType.Debug, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
                 }
 
@@ -340,10 +364,11 @@ namespace Titanoboa
                 await command.ExecuteNonQueryAsync();
 
                 logger.LogEvent(Logger.EventType.Debug, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
-            }            
+            }
         }
 
-        public async Task DeleteTransaction(Transaction transaction) {
+        public async Task DeleteTransaction(Transaction transaction)
+        {
             using (var command = GetCommand())
             {
                 command.CommandText = @"DELETE FROM transactions WHERE id = @transactionId";
@@ -354,8 +379,9 @@ namespace Titanoboa
                 logger.LogEvent(Logger.EventType.Debug, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
             }
         }
-        
-        private NpgsqlCommand GetCommand() {
+
+        private NpgsqlCommand GetCommand()
+        {
             return SqlHelper.GetCommand(connection);
         }
 

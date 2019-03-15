@@ -58,6 +58,9 @@ namespace Titanoboa
                 case "SET_BUY_TRIGGER":
                     commandTask = SetBuyTrigger();
                     break;
+                case "COMMIT_BUY_TRIGGER":
+                    commandTask = CommitBuyTrigger();
+                    break;
                 case "CANCEL_SET_BUY":
                     commandTask = CancelSetBuy();
                     break;
@@ -66,6 +69,9 @@ namespace Titanoboa
                     break;
                 case "SET_SELL_TRIGGER":
                     commandTask = SetSellTrigger();
+                    break;
+                case "COMMIT_SELL_TRIGGER":
+                    commandTask = CommitSellTrigger();
                     break;
                 case "CANCEL_SET_SELL":
                     commandTask = CancelSetSell();
