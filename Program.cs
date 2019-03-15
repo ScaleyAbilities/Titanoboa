@@ -102,7 +102,10 @@ namespace Titanoboa
             long nextTaskId = 0;
             
             RabbitHelper.CreateConsumer((json) => {
-                runningTasks.Append((nextTaskId, RunCommands(nextTaskId++, json)));
+                var id = nextTaskId++;
+                var task = RunCommands(id, json);
+                runningTasks.Append((id, task));
+                return task;
             });
 
             // TODO: Need to make rabbit queue for sending triggers to Twig
@@ -132,6 +135,7 @@ namespace Titanoboa
             }
 
             Console.WriteLine("Done.");
+            Environment.Exit(0);
         }
 
         public static async Task WaitForTasksUpTo(long id)

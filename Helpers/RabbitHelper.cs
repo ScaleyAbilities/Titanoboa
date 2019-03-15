@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
@@ -25,7 +26,8 @@ namespace Titanoboa
             var factory = new ConnectionFactory() { 
                 HostName = rabbitHost,
                 UserName = "scaley",
-                Password = "abilities"
+                Password = "abilities",
+                DispatchConsumersAsync = true,
             };
 
             // Try connecting to rabbit until it works
@@ -55,16 +57,16 @@ namespace Titanoboa
             );
 
             // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 10, global: false);
 
             rabbitProperties = rabbitChannel.CreateBasicProperties();
             rabbitProperties.Persistent = true;
         }
 
-        public static void CreateConsumer(Action<JObject> messageCallback)
+        public static void CreateConsumer(Func<JObject, Task> messageCallback)
         {
-            var consumer = new EventingBasicConsumer(rabbitChannel);
-            consumer.Received += (model, eventArgs) =>
+            var consumer = new AsyncEventingBasicConsumer(rabbitChannel);
+            consumer.Received += async (model, eventArgs) =>
             {
                 JObject message = null;
                 try 
@@ -77,7 +79,7 @@ namespace Titanoboa
                 }
                 
                 if (message != null)
-                    messageCallback(message);
+                    await messageCallback(message);
 
                 // We will always ack even if we can't parse it otherwise queue will hang
                 rabbitChannel.BasicAck(eventArgs.DeliveryTag, false);
