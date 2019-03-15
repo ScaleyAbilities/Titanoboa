@@ -1,12 +1,10 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
          * - check quote server for current stock price
@@ -14,21 +12,21 @@ namespace Titanoboa
          * - calculate if user has enough to sell, stock amount * current price > selling price
          * - update transaction server
          */
-        public static void Sell(string username, JObject commandParams)
+        public void Sell()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             var sellAmount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
-            var user = TransactionHelper.GetUser(username);
+            var user = databaseHelper.GetUser(username);
 
-            Program.Logger.LogCommand(user, sellAmount, stockSymbol);
+            logger.LogCommand(user, sellAmount, stockSymbol);
 
             // Get current stock price
-            var stockPrice = TransactionHelper.GetStockPrice(user, stockSymbol);
+            var stockPrice = databaseHelper.GetStockPrice(user, stockSymbol);
 
             // Get amount of stocks user owns
-            var pendingStockAmount = TransactionHelper.GetStocks(user, stockSymbol, true);
+            var pendingStockAmount = databaseHelper.GetStocks(user, stockSymbol, true);
 
             // Check that user has enough stocks to sell.
             if (sellAmount > pendingStockAmount * stockPrice)
@@ -46,7 +44,7 @@ namespace Titanoboa
             // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
             stockAmount = -stockAmount;
 
-            var transaction = TransactionHelper.CreateTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, stockPrice, "pending");
+            var transaction = databaseHelper.CreateTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, stockPrice, "pending");
         } 
     }
 }

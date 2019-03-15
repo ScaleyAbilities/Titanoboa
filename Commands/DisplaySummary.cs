@@ -1,13 +1,11 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
 using Newtonsoft.Json.Linq;
 using System.Xml;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
             DisplaySummary command flow:
@@ -15,11 +13,11 @@ namespace Titanoboa
             - get user's balance
             - get user's existing triggers
          */
-        public static void DisplaySummary(string username)
+        public void DisplaySummary()
         {
             // TODO: this
-            var user = TransactionHelper.GetUser(username);
-            Program.Logger.LogCommand(user);
+            var user = databaseHelper.GetUser(username);
+            logger.LogCommand(user);
         }
     }
 }

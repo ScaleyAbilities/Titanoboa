@@ -76,7 +76,7 @@ namespace Titanoboa
                 var timestamp = recv[3];
                 var cryptokey = recv[4];
 
-                var logger = new Logger();
+                var logger = new Logger("");
                 logger.LogQuoteServer(user, amount, quoteStockSymbol, quoteUserId, timestamp, cryptokey);
                 logger.CommitLogs();
             }
