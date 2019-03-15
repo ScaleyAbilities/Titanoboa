@@ -59,7 +59,7 @@ namespace Titanoboa
             {
                 throw new InvalidOperationException("Can't sell less than 1 stock.");
             }
-            
+
             // Get the users pending stocks, error if not enough
             var userStockAmountPending = TransactionHelper.GetStocks(user, stockSymbol, true);
             if (userStockAmountPending <= 0)
@@ -79,11 +79,13 @@ namespace Titanoboa
 
             // Send new trigger to Twig
             JObject twigTrigger = new JObject();
-            twigTrigger["User"] = existingSellTrigger.User.Id;
-            twigTrigger["Command"] = "SELL";
-            twigTrigger["StockSymbol"] = existingSellTrigger.StockSymbol;
-            twigTrigger["StockPrice"] = sellPrice;
-            RabbitHelper.PushCommand(twigTrigger);
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "SELL");
+            twigParams.Add("stock", existingSellTrigger.StockSymbol);
+            twigParams.Add("price", sellPrice);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
         }
     }
 }

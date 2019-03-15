@@ -59,11 +59,13 @@ namespace Titanoboa
 
             // Send new trigger to Twig
             JObject twigTrigger = new JObject();
-            twigTrigger["User"] = existingBuyTrigger.User.Id;
-            twigTrigger["Command"] = "BUY";
-            twigTrigger["StockSymbol"] = existingBuyTrigger.StockSymbol;
-            twigTrigger["StockPrice"] = buyPrice;
-            RabbitHelper.PushCommand(twigTrigger);
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "SELL");
+            twigParams.Add("stock", existingBuyTrigger.StockSymbol);
+            twigParams.Add("price", buyPrice);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
         }
     }
 }

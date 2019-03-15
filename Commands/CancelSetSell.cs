@@ -34,10 +34,12 @@ namespace Titanoboa
 
             // Send new trigger to Twig
             JObject twigTrigger = new JObject();
-            twigTrigger["User"] = existingSellTrigger.User.Username;
-            twigTrigger["Command"] = "CANCEL_SELL";
-            twigTrigger["StockSymbol"] = existingSellTrigger.StockSymbol;
-            RabbitHelper.PushCommand(twigTrigger);
+            JObject twigParams = new JObject();
+            twigTrigger.Add("usr", username);
+            twigTrigger.Add("cmd", "CANCEL_SELL");
+            twigParams.Add("stock", existingSellTrigger.StockSymbol);
+            twigTrigger.Add("params", twigParams);
+            RabbitHelper.PushTrigger(twigTrigger);
         }
     }
 }
