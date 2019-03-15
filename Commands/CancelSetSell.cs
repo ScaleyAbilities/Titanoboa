@@ -1,35 +1,36 @@
 using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace Titanoboa
 {
     public partial class CommandHandler
     {
-        public void CancelSetSell() {
+        public async Task CancelSetSell() {
             CheckParams("stock");
 
             // Unpack JObject
             var stockSymbol = commandParams["stock"].ToString();
 
             //  Get user
-            var user = databaseHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
 
             logger.LogCommand(user, null, stockSymbol);
 
             // Get trigger to cancel
-            var existingSetSellTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingSetSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSetSellTrigger != null)
             {
                 var refundedStocks = existingSetSellTrigger.StockAmount ?? 0;
 
                 // Get users stocks
-                var numUserStocks = databaseHelper.GetStocks(user, stockSymbol);
+                var numUserStocks = await databaseHelper.GetStocks(user, stockSymbol);
 
                 // Refund user
                 var newUserStocks = numUserStocks + refundedStocks;
-                databaseHelper.UpdateStocks(user, stockSymbol, newUserStocks);
+                await databaseHelper.UpdateStocks(user, stockSymbol, newUserStocks);
 
                 // Cancel transaction & log
-                databaseHelper.DeleteTransaction(existingSetSellTrigger);
+                await databaseHelper.DeleteTransaction(existingSetSellTrigger);
             }
         }
         

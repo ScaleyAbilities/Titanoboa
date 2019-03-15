@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Titanoboa
 {
@@ -9,16 +10,16 @@ namespace Titanoboa
             1- Get most recent buy (within 60 seconds), 
             2- Delete transaction from transaction table
          */
-        public void CancelBuy() 
+        public async Task CancelBuy() 
         {
-            var user = databaseHelper.GetUser(username, false);
+            var user = await databaseHelper.GetUser(username, false);
 
             logger.LogCommand(user);
 
-            var transaction = databaseHelper.GetLatestPendingTransaction(user, "BUY");
+            var transaction = await databaseHelper.GetLatestPendingTransaction(user, "BUY");
             if (transaction != null)
             {
-                databaseHelper.DeleteTransaction(transaction);
+                await databaseHelper.DeleteTransaction(transaction);
             }
             else 
             {

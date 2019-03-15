@@ -64,12 +64,12 @@ namespace Titanoboa
         public static void CreateConsumer(Action<JObject> messageCallback)
         {
             var consumer = new EventingBasicConsumer(rabbitChannel);
-            consumer.Received += (model, ea) =>
+            consumer.Received += (model, eventArgs) =>
             {
                 JObject message = null;
                 try 
                 {
-                    message = JObject.Parse(Encoding.UTF8.GetString(ea.Body));
+                    message = JObject.Parse(Encoding.UTF8.GetString(eventArgs.Body));
                 }
                 catch (JsonReaderException ex)
                 {
@@ -80,7 +80,7 @@ namespace Titanoboa
                     messageCallback(message);
 
                 // We will always ack even if we can't parse it otherwise queue will hang
-                rabbitChannel.BasicAck(ea.DeliveryTag, false);
+                rabbitChannel.BasicAck(eventArgs.DeliveryTag, false);
             };
 
             // This will begin consuming messages asynchronously

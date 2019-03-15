@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
@@ -13,7 +14,7 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks)
             3- Insert buy into transactions table, *set pending flag to true*
          */
-        public void Buy() 
+        public async Task Buy() 
         {
             CheckParams("amount", "stock");
 
@@ -22,7 +23,7 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var user = databaseHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
 
             // Log the command
             logger.LogCommand(user, amount, stockSymbol);
@@ -33,7 +34,7 @@ namespace Titanoboa
             }
 
             // Get current stock price
-            var stockPrice = databaseHelper.GetStockPrice(user, stockSymbol);
+            var stockPrice = await databaseHelper.GetStockPrice(user, stockSymbol);
 
             if (amount < stockPrice)
             {
@@ -43,7 +44,7 @@ namespace Titanoboa
             var stockAmount = (int)(amount / stockPrice);
             var balanceChange = stockAmount * stockPrice * -1;
 
-            var transaction = databaseHelper.CreateTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, stockPrice, "pending");
+            await databaseHelper.CreateTransaction(user, stockSymbol, "BUY", balanceChange, stockAmount, stockPrice, "pending");
         } 
     }
 }

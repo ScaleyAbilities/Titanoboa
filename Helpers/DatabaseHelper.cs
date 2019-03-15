@@ -1,6 +1,7 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 
@@ -9,17 +10,15 @@ namespace Titanoboa
     public class DatabaseHelper : IDisposable
     {
         private DbConnection connection;
-        private DbTransaction transaction;
         private Logger logger;
 
         public DatabaseHelper(DbConnection connection, Logger logger)
         {
             this.connection = connection;
-            this.transaction = this.connection.BeginTransaction();
             this.logger = logger;
         }
 
-        public User GetUser(string username, bool withPendingBalance = false) 
+        public async Task<User> GetUser(string username, bool withPendingBalance = false) 
         {
             using (var command = GetCommand())
             {
@@ -40,9 +39,9 @@ namespace Titanoboa
                 }
                 
                 command.Parameters.AddWithValue("@username", username);
-                command.Prepare();
+                await command.PrepareAsync();
                 
-                var reader = command.ExecuteReader();
+                var reader = await command.ExecuteReaderAsync();
                 var createdNewUser = false;
                 if (!reader.HasRows)
                 {
@@ -53,21 +52,21 @@ namespace Titanoboa
                     {
                         createCommand.CommandText = "INSERT INTO users (username, balance) VALUES (@username, 0)";
                         createCommand.Parameters.AddWithValue("@username", username);
-                        createCommand.Prepare();
-                        createCommand.ExecuteNonQuery();
+                        await createCommand.PrepareAsync();
+                        await createCommand.ExecuteNonQueryAsync();
                     }                    
 
                     createdNewUser = true;
 
                     // Re-run the get user command
-                    reader = command.ExecuteReader();
+                    reader = await command.ExecuteReaderAsync();
                 }
 
                 // Use try-finally since we couldn't use a using block
                 User user;
                 try
                 {
-                    reader.Read();
+                    await reader.ReadAsync();
 
                     user = new User() {
                         Id = Convert.ToInt64(reader["id"]),
@@ -90,15 +89,15 @@ namespace Titanoboa
             }
         }
 
-        public void UpdateUserBalance(ref User user, decimal balance)
+        public async Task UpdateUserBalance(User user, decimal balance)
         {
             using (var command = GetCommand())
             {
                 command.CommandText = "UPDATE users SET balance = @balance WHERE id = @userid";
                 command.Parameters.AddWithValue("@balance", balance);
                 command.Parameters.AddWithValue("@userid", user.Id);
-                command.Prepare();
-                command.ExecuteNonQuery();
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
                 
                 // Now that the balance has been updated, update the model
                 user.Balance = balance;
@@ -107,7 +106,7 @@ namespace Titanoboa
             }
         }
 
-        public Transaction CreateTransaction(
+        public async Task<Transaction> CreateTransaction(
             User user, 
             string stockSymbol, 
             string commandText, 
@@ -129,8 +128,8 @@ namespace Titanoboa
                 command.Parameters.AddWithValue("@stockamount", (object)stockAmount ?? DBNull.Value);
                 command.Parameters.AddWithValue("@stockprice", (object)stockPrice ?? DBNull.Value);
                 command.Parameters.AddWithValue("@type", type);
-                command.Prepare();
-                var id = Convert.ToInt64(command.ExecuteScalar());
+                await command.PrepareAsync();
+                var id = Convert.ToInt64(await command.ExecuteScalarAsync());
 
                 var transaction = new Transaction() {
                     Id = id,
@@ -149,7 +148,7 @@ namespace Titanoboa
             }
         }
 
-        public Transaction GetLatestPendingTransaction(User user, string commandText) {
+        public async Task<Transaction> GetLatestPendingTransaction(User user, string commandText) {
             using (var command = GetCommand())
             {
                 command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
@@ -162,14 +161,14 @@ namespace Titanoboa
 
                 command.Parameters.AddWithValue("@userid", user.Id);
                 command.Parameters.AddWithValue("@commandText", commandText);
-                command.Prepare();
+                await command.PrepareAsync();
 
                 Transaction transaction = null;
-                using (var reader = command.ExecuteReader())
+                using (var reader = await command.ExecuteReaderAsync())
                 {
                     if (reader.HasRows)
                     {
-                        reader.Read();
+                        await reader.ReadAsync();
                         transaction = new Transaction() {
                             Id = Convert.ToInt64(reader["id"]),
                             User = user,
@@ -187,14 +186,14 @@ namespace Titanoboa
             }
         }
 
-        public void CommitTransaction(ref Transaction transaction)
+        public async Task CommitTransaction(Transaction transaction)
         {
             using (var command = GetCommand())
             {
                 command.CommandText = @"UPDATE transactions SET type = 'completed' WHERE id = @id";
                 command.Parameters.AddWithValue("@id", transaction.Id);
-                command.Prepare();
-                command.ExecuteNonQuery();
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
 
                 transaction.Type = "completed";
 
@@ -202,12 +201,12 @@ namespace Titanoboa
             }
         }
 
-        public decimal GetStockPrice(User user, string stockSymbol)
+        public async Task<decimal> GetStockPrice(User user, string stockSymbol)
         {
-            return QuoteHelper.GetQuote(user, stockSymbol);
+            return await QuoteHelper.GetQuote(user, stockSymbol, logger);
         }
 
-        public Transaction GetTriggerTransaction(User user, string stockSymbol, string triggerType)
+        public async Task<Transaction> GetTriggerTransaction(User user, string stockSymbol, string triggerType)
         {
             using (var command = GetCommand())
             {
@@ -219,13 +218,13 @@ namespace Titanoboa
                 
                 command.Parameters.AddWithValue("@userid", user.Id);
                 command.Parameters.AddWithValue("@commandText", triggerType);
-                command.Prepare();
+                await command.PrepareAsync();
 
-                using (var reader = command.ExecuteReader())
+                using (var reader = await command.ExecuteReaderAsync())
                 {
                     if (reader.HasRows)
                     {
-                        reader.Read();
+                        await reader.ReadAsync();
                         var transaction = new Transaction() {
                             Id = Convert.ToInt64(reader["id"]),
                             User = user,
@@ -245,7 +244,7 @@ namespace Titanoboa
             return null;
         }
 
-        public void SetTransactionBalanceChange(ref Transaction transaction, decimal balanceChange)
+        public async Task SetTransactionBalanceChange(Transaction transaction, decimal balanceChange)
         {
             using (var command = GetCommand())
             {
@@ -255,8 +254,8 @@ namespace Titanoboa
 
                 command.Parameters.AddWithValue("@balanceChange", balanceChange);
                 command.Parameters.AddWithValue("@id", transaction.Id);
-                command.Prepare();
-                command.ExecuteNonQuery();
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
 
                 transaction.BalanceChange = balanceChange;
 
@@ -264,7 +263,7 @@ namespace Titanoboa
             }
         }
 
-        public void SetTransactionStockPrice(ref Transaction transaction, decimal stockPrice)
+        public async Task SetTransactionStockPrice(Transaction transaction, decimal stockPrice)
         {
             using (var command = GetCommand())
             {
@@ -273,8 +272,8 @@ namespace Titanoboa
                 
                 command.Parameters.AddWithValue("@stockPrice", stockPrice);
                 command.Parameters.AddWithValue("@id", transaction.Id);
-                command.Prepare();
-                command.ExecuteNonQuery();
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
 
                 transaction.StockPrice = stockPrice;
 
@@ -282,7 +281,7 @@ namespace Titanoboa
             }
         }
 
-        public int GetStocks(User user, string stockSymbol, bool includePending = false)
+        public async Task<int> GetStocks(User user, string stockSymbol, bool includePending = false)
         {
             using (var command = GetCommand())
             {
@@ -304,9 +303,9 @@ namespace Titanoboa
                 }
                 command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
                 command.Parameters.AddWithValue("@userid", user.Id);
-                command.Prepare();
+                await command.PrepareAsync();
 
-                var stocks = SqlHelper.ConvertToNullableInt32(command.ExecuteScalar());
+                var stocks = SqlHelper.ConvertToNullableInt32(await command.ExecuteScalarAsync());
 
                 if (stocks == null)
                 {
@@ -317,8 +316,8 @@ namespace Titanoboa
                                                       VALUES (@userid, @stockSymbol, 0)";
                         createCommand.Parameters.AddWithValue("@userid", user.Id);
                         createCommand.Parameters.AddWithValue("@stockSymbol", stockSymbol);
-                        createCommand.Prepare();
-                        createCommand.ExecuteNonQuery();
+                        await createCommand.PrepareAsync();
+                        await createCommand.ExecuteNonQueryAsync();
                     }
                     
                     logger.LogEvent(Logger.EventType.Debug, $"Stocks entry not found, created new one with 0 stocks", user, null, stockSymbol);
@@ -328,7 +327,7 @@ namespace Titanoboa
             }
         }
 
-        public void UpdateStocks(User user, string stockSymbol, int newAmount)
+        public async Task UpdateStocks(User user, string stockSymbol, int newAmount)
         {
             using (var command = GetCommand())
             {
@@ -337,37 +336,27 @@ namespace Titanoboa
                 command.Parameters.AddWithValue("@userid", user.Id);
                 command.Parameters.AddWithValue("@stockSymbol", stockSymbol);
                 command.Parameters.AddWithValue("@newAmount", newAmount);
-                command.Prepare();
-                command.ExecuteNonQuery();
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
 
                 logger.LogEvent(Logger.EventType.Debug, $"Updated user's stocks to {newAmount}", user, null, stockSymbol);
             }            
         }
 
-        public void DeleteTransaction(Transaction transaction) {
+        public async Task DeleteTransaction(Transaction transaction) {
             using (var command = GetCommand())
             {
                 command.CommandText = @"DELETE FROM transactions WHERE id = @transactionId";
                 command.Parameters.AddWithValue("@transactionId", transaction.Id);
-                command.Prepare();
-                command.ExecuteNonQuery();
+                await command.PrepareAsync();
+                await command.ExecuteNonQueryAsync();
 
                 logger.LogEvent(Logger.EventType.Debug, $"Cancelled {transaction.Command} transaction", transaction.User, transaction.BalanceChange, transaction.StockSymbol);
             }
         }
-
-        public void CommitAllChanges()
-        {
-            transaction.Commit();
-        }
-
-        public void RollbackAllChanges()
-        {
-            transaction.Rollback();
-        }
         
         private NpgsqlCommand GetCommand() {
-            return SqlHelper.GetCommand(connection, transaction);
+            return SqlHelper.GetCommand(connection);
         }
 
         #region IDisposable Support
@@ -378,10 +367,7 @@ namespace Titanoboa
             if (!disposedValue)
             {
                 if (disposing)
-                {
-                    transaction.Dispose();
                     connection.Dispose();
-                }
 
                 disposedValue = true;
             }
