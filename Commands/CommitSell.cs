@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
@@ -12,29 +13,29 @@ namespace Titanoboa
             3- Remove stock amounts
             3- Update buy in transactions table, *set pending flag to false, and update timestamp*
          */
-        public void CommitSell()
+        public async Task CommitSell()
         {
-            var user = databaseHelper.GetUser(username, false);
+            var user = await databaseHelper.GetUser(username, false);
             
             logger.LogCommand(user);
 
-            var transaction = databaseHelper.GetLatestPendingTransaction(user, "SELL");
+            var transaction = await databaseHelper.GetLatestPendingTransaction(user, "SELL");
             if (transaction == null)
             {
                 throw new InvalidOperationException("No pending SELL transactions to commit.");
             }
 
             var newBalance = user.Balance + Math.Abs(transaction.BalanceChange);
-            databaseHelper.UpdateUserBalance(ref user, newBalance);
+            await databaseHelper.UpdateUserBalance(user, newBalance);
 
             var stockName = transaction.StockSymbol;
             var stockAmount = transaction.StockAmount ?? 0;
    
-            var userStockAmount = databaseHelper.GetStocks(user, stockName);
+            var userStockAmount = await databaseHelper.GetStocks(user, stockName);
             var newStockAmount = userStockAmount - stockAmount;
 
-            databaseHelper.UpdateStocks(user, stockName, newStockAmount);
-            databaseHelper.CommitTransaction(ref transaction);
+            await databaseHelper.UpdateStocks(user, stockName, newStockAmount);
+            await databaseHelper.CommitTransaction(transaction);
         }
     }
 }

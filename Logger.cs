@@ -1,6 +1,8 @@
 using System;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using Npgsql;
 
 namespace Titanoboa
@@ -16,21 +18,20 @@ namespace Titanoboa
 
         public int WorkId;
         private NpgsqlCommand fullCommand = new NpgsqlCommand();
-        private static int runningThreads = 0;
 
         // We use a StringBuilder to build up the command since it's faster than using += on a string
         private StringBuilder fullCommandText = new StringBuilder();
         private int insertNum = 0;
         private bool committed = false;
 
-        public Logger(string commandName)
+        public async Task Init(string commandName)
         {
             // We need a work ID, so we'll create one in the DB
-            using (var connection = SqlHelper.GetConnection())
+            using (var connection = await SqlHelper.GetConnection())
             using (var command = SqlHelper.GetCommand(connection))
             {
                 command.CommandText = "INSERT INTO logs_work DEFAULT VALUES RETURNING id";
-                WorkId = (int)command.ExecuteScalar();
+                WorkId = (int)(await command.ExecuteScalarAsync());
             }
 
             // Create new unit of work and get ID
@@ -96,33 +97,18 @@ namespace Titanoboa
             insertNum++;
         }
 
-        public void CommitLogs()
+        public async Task CommitLogs()
         {
             if (insertNum <= 0 || committed)
                 return;
 
-            var thread = new Thread(() => {
-                using (var connection = SqlHelper.GetConnection())
-                {
-                    fullCommand.Connection = connection;
-                    fullCommand.CommandText = fullCommandText.ToString();
-                    fullCommand.Prepare();
-                    fullCommand.ExecuteNonQuery();
-                    runningThreads--;
-                    fullCommand.Dispose();
-                }
-            });
-            runningThreads++;
-            thread.Start();
-
-            committed = true;
-        }
-
-        public static void WaitForTasks()
-        {
-            while (runningThreads > 0)
+            using (var connection = await SqlHelper.GetConnection())
             {
-                System.Threading.Thread.Sleep(10);
+                fullCommand.Connection = connection;
+                fullCommand.CommandText = fullCommandText.ToString();
+                await fullCommand.PrepareAsync();
+                await fullCommand.ExecuteNonQueryAsync();
+                fullCommand.Dispose();
             }
         }
     }

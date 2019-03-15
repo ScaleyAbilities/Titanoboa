@@ -3,15 +3,17 @@ using System.Data;
 using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Xml;
+using System.Threading.Tasks;
 using Npgsql;
+using System.Data.Common;
 
 namespace Titanoboa
 {
     public static class LogXmlHelper
     {
-        public static void CreateLog(string xmlFilename, User user = null)
+        public static async Task CreateLog(string xmlFilename, User user = null)
         {
-            using (var connection = SqlHelper.GetConnection())
+            using (var connection = await SqlHelper.GetConnection())
             using (var logCommand = SqlHelper.GetCommand(connection))
             {
                 logCommand.CommandText = @"SELECT *, users.username AS username FROM logs 
@@ -23,17 +25,17 @@ namespace Titanoboa
                     logCommand.Parameters.AddWithValue("@userid", user.Id);
                 }
 
-                logCommand.Prepare();
+                await logCommand.PrepareAsync();
 
                 XmlWriterSettings settings = new XmlWriterSettings { Indent = true };
 
                 using (var xmlWriter = XmlWriter.Create(xmlFilename, settings))
-                using (var reader = logCommand.ExecuteReader())
+                using (var reader = await logCommand.ExecuteReaderAsync())
                 {
                     xmlWriter.WriteStartDocument();
                     xmlWriter.WriteStartElement("log");
 
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
                         var logType = reader["logtype"].ToString();
                         switch (logType)
@@ -109,14 +111,14 @@ namespace Titanoboa
 
         }
 
-        private static void WriteRequiredValues(XmlWriter xmlWriter, NpgsqlDataReader reader)
+        private static void WriteRequiredValues(XmlWriter xmlWriter, DbDataReader reader)
         {
             xmlWriter.WriteElementString("timestamp", UnixTimestamp((DateTime)reader["timestamp"]));
             xmlWriter.WriteElementString("server", reader["server"].ToString());
             xmlWriter.WriteElementString("transactionNum", reader["workid"].ToString());
         }
 
-        private static void WriteCommonValues(XmlWriter xmlWriter, NpgsqlDataReader reader)
+        private static void WriteCommonValues(XmlWriter xmlWriter, DbDataReader reader)
         {
             xmlWriter.WriteElementString("command", reader["command"].ToString());
 

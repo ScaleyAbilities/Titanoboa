@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System.Xml;
 
@@ -18,7 +19,7 @@ namespace Titanoboa
                 - get transactions by user
                 - write xml
          */
-        public void Dumplog()
+        public async Task Dumplog()
         {
             CheckParams("filename");
 
@@ -26,18 +27,18 @@ namespace Titanoboa
 
             if (!string.IsNullOrEmpty(username))
             {
-                var user = databaseHelper.GetUser(username);
+                var user = await databaseHelper.GetUser(username);
                 logger.LogCommand(user, null, null, filename);
-                logger.CommitLogs();
-                Logger.WaitForTasks();
-                LogXmlHelper.CreateLog(filename, user);
+                await logger.CommitLogs();
+                await Program.WaitForTasksUpTo(taskId);
+                await LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
                 logger.LogCommand(null, null, null, filename);
-                logger.CommitLogs();
-                Logger.WaitForTasks();
-                LogXmlHelper.CreateLog(filename);
+                await logger.CommitLogs();
+                await Program.WaitForTasksUpTo(taskId);
+                await LogXmlHelper.CreateLog(filename);
             }
         }
     }

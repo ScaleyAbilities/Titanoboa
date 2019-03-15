@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace Titanoboa
 {
     public partial class CommandHandler 
@@ -7,16 +9,16 @@ namespace Titanoboa
             1- Get most recent sell (within 60 seconds), 
             2- Delete transaction from transaction table
          */
-         public void CancelSell() 
+         public async Task CancelSell() 
          {
-            var user = databaseHelper.GetUser(username, false);
+            var user = await databaseHelper.GetUser(username, false);
 
             logger.LogCommand(user);
 
-            var transaction = databaseHelper.GetLatestPendingTransaction(user, "SELL");
+            var transaction = await databaseHelper.GetLatestPendingTransaction(user, "SELL");
             if (transaction != null)
             {
-                databaseHelper.DeleteTransaction(transaction);
+                await databaseHelper.DeleteTransaction(transaction);
             }
          }
         

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Titanoboa
 {
@@ -11,28 +12,28 @@ namespace Titanoboa
             3- Add stock amounts
             3- Update buy in transactions table, *set pending flag to false, and update timestamp*
          */
-        public void CommitBuy() {
-            var user = databaseHelper.GetUser(username, false);
+        public async Task CommitBuy() {
+            var user = await databaseHelper.GetUser(username, false);
 
             logger.LogCommand(user);
             
-            var transaction = databaseHelper.GetLatestPendingTransaction(user, "BUY");
+            var transaction = await databaseHelper.GetLatestPendingTransaction(user, "BUY");
             if (transaction == null)
             {
                 throw new InvalidOperationException("No pending BUY transactions to commit.");
             }
 
             var newBalance = user.Balance - Math.Abs(transaction.BalanceChange);
-            databaseHelper.UpdateUserBalance(ref user, newBalance);
+            await databaseHelper.UpdateUserBalance(user, newBalance);
 
             var stockName = transaction.StockSymbol;
             var stockAmount = transaction.StockAmount;
 
-            var userStockAmount = databaseHelper.GetStocks(user, stockName);
+            var userStockAmount = await databaseHelper.GetStocks(user, stockName);
             var newStockAmount = (stockAmount ?? 0) + userStockAmount;
 
-            databaseHelper.UpdateStocks(user, stockName, newStockAmount);
-            databaseHelper.CommitTransaction(ref transaction);
+            await databaseHelper.UpdateStocks(user, stockName, newStockAmount);
+            await databaseHelper.CommitTransaction(transaction);
         }
     }
 }

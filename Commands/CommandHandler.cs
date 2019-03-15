@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
@@ -10,72 +11,78 @@ namespace Titanoboa
         private JObject commandParams;
         private DatabaseHelper databaseHelper;
         private Logger logger;
+        private long taskId;
 
-        public CommandHandler(string username, string command, JObject commandParams, DatabaseHelper databaseHelper, Logger logger)
+        public CommandHandler(string username, string command, JObject commandParams, DatabaseHelper databaseHelper, Logger logger, long taskId)
         {
             this.username = username;
             this.command = command;
             this.commandParams = commandParams;
             this.databaseHelper = databaseHelper;
             this.logger = logger;
+            this.taskId = taskId;
         }
 
-        public void Run()
+        public async Task Run()
         {
+            Task commandTask = null;
             switch (command)
             {
                 case "QUOTE":
-                    Quote();
+                    commandTask = Quote();
                     break;
                 case "ADD":
-                    Add();
+                    commandTask = Add();
                     break;
                 case "BUY":
-                    Buy();
+                    commandTask = Buy();
                     break;
                 case "COMMIT_BUY":
-                    CommitBuy();
+                    commandTask = CommitBuy();
                     break;
                 case "CANCEL_BUY":
-                    CancelBuy();
+                    commandTask = CancelBuy();
                     break;
                 case "SELL":
-                    Sell();
+                    commandTask = Sell();
                     break;
                 case "COMMIT_SELL":
-                    CommitSell();
+                    commandTask = CommitSell();
                     break;
                 case "CANCEL_SELL":
-                    CancelSell();
+                    commandTask = CancelSell();
                     break;
                 case "SET_BUY_AMOUNT":
-                    SetBuyAmount();
+                    commandTask = SetBuyAmount();
                     break;
                 case "SET_BUY_TRIGGER":
-                    SetBuyTrigger();
+                    commandTask = SetBuyTrigger();
                     break;
                 case "CANCEL_SET_BUY":
-                    CancelSetBuy();
+                    commandTask = CancelSetBuy();
                     break;
                 case "SET_SELL_AMOUNT":
-                    SetSellAmount();
+                    commandTask = SetSellAmount();
                     break;
                 case "SET_SELL_TRIGGER":
-                    SetSellTrigger();
+                    commandTask = SetSellTrigger();
                     break;
                 case "CANCEL_SET_SELL":
-                    CancelSetSell();
+                    commandTask = CancelSetSell();
                     break;
                 case "DUMPLOG":
-                    Dumplog();
+                    commandTask = Dumplog();
                     break;
                 case "DISPLAY_SUMMARY":
-                    DisplaySummary();
+                    commandTask = DisplaySummary();
                     break;
                 default:
                     Console.Error.WriteLine($"Unknown command '{command}'");
                     break;
             }
+
+            if (commandTask != null)
+                await commandTask;
         }
 
         private void CheckParams(params string[] expectedParams)

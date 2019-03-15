@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
@@ -13,7 +14,7 @@ namespace Titanoboa
             3- Calculate stock amount to be sold (only whole stocks, based on user amount and stock price)
             3- Update number of stocks in transactions table
          */
-        public void SetSellTrigger() 
+        public async Task SetSellTrigger() 
         {
             CheckParams("price", "stock");
 
@@ -22,12 +23,12 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var user = databaseHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
 
             logger.LogCommand(user, sellPrice, stockSymbol);
 
             // Get the existing trigger to find amount in $$ the user wants to sell of their stock
-            var existingTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingTrigger == null)
             {
                 throw new InvalidOperationException("No existing trigger");
@@ -41,7 +42,7 @@ namespace Titanoboa
             }
 
             // Check if they have enough to sell
-            var userStockAmount = databaseHelper.GetStocks(user, stockSymbol, true);
+            var userStockAmount = await databaseHelper.GetStocks(user, stockSymbol, true);
             var numStockToSell = (int)Math.Floor(sellAmount / sellPrice);
             if (userStockAmount < numStockToSell)
             {
@@ -51,9 +52,9 @@ namespace Titanoboa
             // Subtract stocks from user account
             // any extra $$ will be refunded upon trigger point being hit / cancel trigger events
             var newUserStockAmount = userStockAmount - numStockToSell;
-            databaseHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
 
-            databaseHelper.SetTransactionStockPrice(ref existingTrigger, sellPrice);
+            await databaseHelper.UpdateStocks(user, stockSymbol, newUserStockAmount);
+            await databaseHelper.SetTransactionStockPrice(existingTrigger, sellPrice);
         } 
     }
 }

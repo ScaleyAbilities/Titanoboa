@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
@@ -13,7 +14,7 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
             3- Update spending balance, and number of stocks in transactions table
          */
-        public void SetBuyTrigger() 
+        public async Task SetBuyTrigger() 
         {
             CheckParams("price", "stock");
 
@@ -22,12 +23,12 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
 
             // Get users current balance
-            var user = databaseHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
 
             // Log 
             logger.LogCommand(user, buyPrice, stockSymbol);
 
-            var buyTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            var buyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             // Make sure trigger was previously created
             if (buyTrigger == null)
             {
@@ -46,7 +47,7 @@ namespace Titanoboa
 
 
             // Update the transaction price
-            databaseHelper.SetTransactionStockPrice(ref buyTrigger, buyPrice);
+            await databaseHelper.SetTransactionStockPrice(buyTrigger, buyPrice);
 
             // Send new trigger to Twig
             dynamic twigTrigger = new JObject();
@@ -60,7 +61,6 @@ namespace Titanoboa
             twigTrigger.StockPrice = buyPrice;
 
             // TODO: Push twigTrigger to Rabbit Q
-
         } 
     }
 }

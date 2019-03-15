@@ -2,6 +2,7 @@ using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 
@@ -10,9 +11,9 @@ namespace Titanoboa
     public static class SqlHelper
     {
         private static string sqlHost = Environment.GetEnvironmentVariable("SQL_HOST") ?? "localhost";
-        private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;";
+        private static string connectionString = $"Server={sqlHost};Database=scaley_abilities;Uid=scaley;Pwd=abilities;Enlist=false";
 
-        public static NpgsqlConnection GetConnection()
+        public static async Task<NpgsqlConnection> GetConnection()
         {
             var connection = new NpgsqlConnection(connectionString);
 
@@ -21,22 +22,22 @@ namespace Titanoboa
             {
                 try
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     connected = true;
                 }
                 catch (DbException ex)
                 {
                     Console.Error.WriteLine($"\n!!!!! Unable to connect to Database, retrying... ({ex.Message})\n");
-                    Thread.Sleep(3000);
+                    await Task.Delay(1000);
                 }
             }
 
             return connection;
         }
 
-        public static NpgsqlCommand GetCommand(DbConnection connection, DbTransaction transaction = null)
+        public static NpgsqlCommand GetCommand(DbConnection connection)
         {
-            return new NpgsqlCommand(null, (NpgsqlConnection)connection, (NpgsqlTransaction)transaction);
+            return new NpgsqlCommand(null, (NpgsqlConnection)connection);
         }
 
         public static int? ConvertToNullableInt32(object num)

@@ -1,32 +1,33 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
     public partial class CommandHandler
     {
-        public void SetSellAmount()
+        public async Task SetSellAmount()
         {
             // Sanity check
             CheckParams("amount", "stock");
 
             // Get params
-            var user = databaseHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
             var amount = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
             logger.LogCommand(user, amount, stockSymbol);
             
             // Check if existing trigger exists
-            Transaction sellTrigger = databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            Transaction sellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (sellTrigger != null)
             {
                 var newAmount = sellTrigger.BalanceChange + amount;
-                databaseHelper.SetTransactionBalanceChange(ref sellTrigger, newAmount);
+                await databaseHelper.SetTransactionBalanceChange(sellTrigger, newAmount);
             }
             else
             {
-                sellTrigger = databaseHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
+                sellTrigger = await databaseHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", amount, null, null, "trigger");
             }
         }
     }

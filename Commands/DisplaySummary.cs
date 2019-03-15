@@ -1,7 +1,7 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using System.Xml;
 
 namespace Titanoboa
 {
@@ -13,10 +13,10 @@ namespace Titanoboa
             - get user's balance
             - get user's existing triggers
          */
-        public void DisplaySummary()
+        public async Task DisplaySummary()
         {
             // TODO: this
-            var user = databaseHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
             logger.LogCommand(user);
         }
     }
