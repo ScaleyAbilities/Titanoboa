@@ -1,23 +1,24 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void CommitBuyTrigger(string username, JObject commandParams)
+        public async Task CommitBuyTrigger()
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
+            CheckParams("price", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
             var committedBuyPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
             // Log command
-            Program.Logger.LogCommand(user, committedBuyPrice, stockSymbol);
+            logger.LogCommand(user, committedBuyPrice, stockSymbol);
 
             // Can't have buy price of 0
             if (committedBuyPrice <= 0)
@@ -26,7 +27,7 @@ namespace Titanoboa
             }
 
             // Get the existing trigger transaction to be committed
-            var existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            var existingBuyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (existingBuyTrigger == null)
             {
                 throw new InvalidOperationException("Can't commit BUY_TRIGGER: Trigger may have been cancelled!");
@@ -49,13 +50,13 @@ namespace Titanoboa
             var numStocksToBuy = (int)Math.Floor(maxToSpend / committedBuyPrice);
             var totalCost = numStocksToBuy * committedBuyPrice;
             var newUserBalance = user.Balance - totalCost;
-            TransactionHelper.UpdateUserBalance(ref user, newUserBalance);
+            await databaseHelper.UpdateUserBalance(user, newUserBalance);
 
             // Update and commit the transaction
-            TransactionHelper.SetTransactionBalanceChange(ref existingBuyTrigger, totalCost); 
-            TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, committedBuyPrice);
-            TransactionHelper.SetTransactionNumStocks(ref existingBuyTrigger, numStocksToBuy);
-            TransactionHelper.CommitTransaction(ref existingBuyTrigger);
+            await databaseHelper.SetTransactionBalanceChange(existingBuyTrigger, totalCost); 
+            await databaseHelper.SetTransactionStockPrice(existingBuyTrigger, committedBuyPrice);
+            await databaseHelper.SetTransactionNumStocks(existingBuyTrigger, numStocksToBuy);
+            await databaseHelper.CommitTransaction(existingBuyTrigger);
         }
     }
 }

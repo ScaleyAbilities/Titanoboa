@@ -1,22 +1,22 @@
 using System;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void SetSellAmount(string username, JObject commandParams)
+        public async Task SetSellAmount()
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "amount", "stock");
+            CheckParams("amount", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
             var sellAmountInDollars = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
-            
-            // Log Command
-            Program.Logger.LogCommand(user, sellAmountInDollars, stockSymbol);
+
+            logger.LogCommand(user, sellAmountInDollars, stockSymbol);
 
             // Doesn't make sense to have a sell amount of 0$
             if (sellAmountInDollars == 0)
@@ -25,18 +25,18 @@ namespace Titanoboa
             }
 
             // Check if existing trigger exists
-            var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSellTrigger != null)
             {
                 var newSellAmountInDollars = existingSellTrigger.BalanceChange + sellAmountInDollars;
 
                 // If trigger has already been set, and this is an update on how much to buy
-                TransactionHelper.SetTransactionBalanceChange(ref existingSellTrigger, newSellAmountInDollars);
+                await databaseHelper.SetTransactionBalanceChange(existingSellTrigger, newSellAmountInDollars);
             }
             else
             {
                 // Create transaction with stockAmount = null, stockPrice = null
-                TransactionHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", sellAmountInDollars, null, null, "pending");
+                await databaseHelper.CreateTransaction(user, stockSymbol, "SELL_TRIGGER", sellAmountInDollars, null, null, "pending");
             }
         }
     }

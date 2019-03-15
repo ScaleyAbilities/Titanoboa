@@ -1,12 +1,11 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
             Set Buy Trigger command flow:
@@ -15,32 +14,32 @@ namespace Titanoboa
             3- Calculate stock amount (only whole stocks, based on user spending and stock price)
             4- Update spending balance, and number of stocks in transactions table
          */
-        public static void SetBuyTrigger(string username, JObject commandParams)
+        public async Task SetBuyTrigger()
         {
-            // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
+            CheckParams("price", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
             var buyPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            // Log command
-            Program.Logger.LogCommand(user, buyPrice, stockSymbol);
+            // Log 
+            logger.LogCommand(user, buyPrice, stockSymbol);
 
             // Can't have buy price of 0
             if (buyPrice == 0)
             {
                 throw new InvalidOperationException("Can't have a buy price of 0.");
             }
-            
+
+            var buyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             // Make sure trigger was previously created
-            var existingBuyTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
+            var existingBuyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");
             if (existingBuyTrigger == null)
             {
                 throw new InvalidOperationException("Can't set BUY_TRIGGER: No existing trigger");
             }
-            
+
             // Make sure the trigger hasn't already been set
             if (existingBuyTrigger.StockPrice != null || existingBuyTrigger.StockAmount != null)
             {
@@ -55,7 +54,7 @@ namespace Titanoboa
             }
 
             // Update the transaction price
-            TransactionHelper.SetTransactionStockPrice(ref existingBuyTrigger, buyPrice);
+            await databaseHelper.SetTransactionStockPrice(existingBuyTrigger, buyPrice);
 
             // Send new trigger to Twig
             JObject twigTrigger = new JObject();

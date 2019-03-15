@@ -1,13 +1,12 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using System.Xml;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
             Dumplog command flow:
@@ -20,26 +19,26 @@ namespace Titanoboa
                 - get transactions by user
                 - write xml
          */
-        public static void Dumplog(string username, JObject commandParams)
+        public async Task Dumplog()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "filename");
+            CheckParams("filename");
 
             var filename = (string)commandParams["filename"];
 
             if (!string.IsNullOrEmpty(username))
             {
-                var user = TransactionHelper.GetUser(username);
-                Program.Logger.LogCommand(user, null, null, filename);
-                Program.Logger.CommitLogs();
-                Logger.WaitForTasks();
-                LogXmlHelper.CreateLog(filename, user);
+                var user = await databaseHelper.GetUser(username);
+                logger.LogCommand(user, null, null, filename);
+                await logger.CommitLogs();
+                await Program.WaitForTasksUpTo(taskId);
+                await LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
-                Program.Logger.LogCommand(null, null, null, filename);
-                Program.Logger.CommitLogs();
-                Logger.WaitForTasks();
-                LogXmlHelper.CreateLog(filename);
+                logger.LogCommand(null, null, null, filename);
+                await logger.CommitLogs();
+                await Program.WaitForTasksUpTo(taskId);
+                await LogXmlHelper.CreateLog(filename);
             }
         }
     }

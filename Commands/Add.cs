@@ -1,28 +1,27 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void Add(string username, JObject commandParams) 
+        public async Task Add()
         {
-            ParamHelper.ValidateParamsExist(commandParams, "amount");
+            CheckParams("amount");
             
             decimal amount = (decimal)commandParams["amount"];
-            var user = TransactionHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
 
             // Log this command
-            Program.Logger.LogCommand(user, amount);
+            logger.LogCommand(user, amount);
 
             // Update existing user balance
             decimal newBalance = user.Balance + amount;
-            var transaction = TransactionHelper.CreateTransaction(user, null, "ADD", amount);
+            await databaseHelper.CreateTransaction(user, null, "ADD", amount);
+            await databaseHelper.UpdateUserBalance(user, newBalance);
+        } 
 
-            TransactionHelper.UpdateUserBalance(ref user, newBalance);
-        }
     }
 }

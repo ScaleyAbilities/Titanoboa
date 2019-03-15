@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RabbitMQ.Client;
@@ -28,7 +29,8 @@ namespace Titanoboa
             {
                 HostName = rabbitHost,
                 UserName = "scaley",
-                Password = "abilities"
+                Password = "abilities",
+                DispatchConsumersAsync = true,
             };
 
             // Try connecting to rabbit until it works
@@ -74,21 +76,21 @@ namespace Titanoboa
             );
 
             // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 10, global: false);
 
             rabbitProperties = rabbitChannel.CreateBasicProperties();
             rabbitProperties.Persistent = true;
         }
 
-        public static void CreateConsumer(Action<JObject> messageCallback, String queue)
+        public static void CreateConsumer(Func<JObject, Task> messageCallback, string queue)
         {
-            var consumer = new EventingBasicConsumer(rabbitChannel);
-            consumer.Received += (model, ea) =>
+            var consumer = new AsyncEventingBasicConsumer(rabbitChannel);
+            consumer.Received += async (model, eventArgs) =>
             {
                 JObject message = null;
                 try
                 {
-                    message = JObject.Parse(Encoding.UTF8.GetString(ea.Body));
+                    message = JObject.Parse(Encoding.UTF8.GetString(eventArgs.Body));
                 }
                 catch (JsonReaderException ex)
                 {
@@ -96,10 +98,10 @@ namespace Titanoboa
                 }
 
                 if (message != null)
-                    messageCallback(message);
+                    await messageCallback(message);
 
                 // We will always ack even if we can't parse it otherwise queue will hang
-                rabbitChannel.BasicAck(ea.DeliveryTag, false);
+                rabbitChannel.BasicAck(eventArgs.DeliveryTag, false);
             };
 
             // This will begin consuming messages asynchronously

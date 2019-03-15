@@ -1,23 +1,24 @@
 using System;
 using System.Data;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
-        public static void CommitSellTrigger(string username, JObject commandParams)
+        public async Task CommitSellTrigger()
         {
             // Sanity check
             ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username);
+            var user = await databaseHelper.GetUser(username);
             var committedSellPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
             // Log command
-            Program.Logger.LogCommand(user, committedSellPrice, stockSymbol);
+            logger.LogCommand(user, committedSellPrice, stockSymbol);
 
             // Can't have sell price of 0
             if (committedSellPrice <= 0)
@@ -26,7 +27,7 @@ namespace Titanoboa
             }
 
             // Get the existing trigger transaction to be committed
-            var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSellTrigger == null)
             {
                 throw new InvalidOperationException("Can't commit SELL_TRIGGER: Trigger may have been cancelled!");
@@ -49,12 +50,12 @@ namespace Titanoboa
             // Calculate + update new user balance
             var moneyMade = committedSellPrice * numStocksToSell;
             var newUserBalance = user.Balance + moneyMade;
-            TransactionHelper.UpdateUserBalance(ref user, newUserBalance);
+            await databaseHelper.UpdateUserBalance(user, newUserBalance);
     
             // Set transaction StockAmount and StockPrice, mark as completed
-            TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, committedSellPrice);
-            TransactionHelper.SetTransactionBalanceChange(ref existingSellTrigger, moneyMade); 
-            TransactionHelper.CommitTransaction(ref existingSellTrigger);      
+            await databaseHelper.SetTransactionStockPrice(existingSellTrigger, committedSellPrice);
+            await databaseHelper.SetTransactionBalanceChange(existingSellTrigger, moneyMade); 
+            await databaseHelper.CommitTransaction(existingSellTrigger);      
         }
     }
 }

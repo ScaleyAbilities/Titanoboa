@@ -1,12 +1,11 @@
 using System;
 using System.Data;
-using MySql.Data;
-using MySql.Data.MySqlClient;
+using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Titanoboa
 {
-    public static partial class Commands
+    public partial class CommandHandler
     {
         /*
             Set Sell Trigger command flow:
@@ -15,19 +14,19 @@ namespace Titanoboa
             3- Calculate stock amount to be sold (only whole stocks, based on user amount and stock price)
             4- Update number of stocks in transactions table
          */
-        public static void SetSellTrigger(string username, JObject commandParams)
+        public async Task SetSellTrigger() 
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
+            CheckParams("price", "stock");
 
             // Get params
-            var user = TransactionHelper.GetUser(username, true);
+            var user = await databaseHelper.GetUser(username, true);
             var sellPrice = (decimal)commandParams["price"];
             var stockSymbol = commandParams["stock"].ToString();
 
             // Log command
-            Program.Logger.LogCommand(user, sellPrice, stockSymbol);
-
+            logger.LogCommand(user, sellPrice, stockSymbol);
+            
             // Can't have a sell price of 0
             if (sellPrice == 0)
             {
@@ -35,7 +34,7 @@ namespace Titanoboa
             }
 
             // Get the existing trigger transaction to be set
-            var existingSellTrigger = TransactionHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
+            var existingSellTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "SELL_TRIGGER");
             if (existingSellTrigger == null)
             {
                 throw new InvalidOperationException("Can't set SELL_TRIGGER: No existing trigger");
@@ -61,7 +60,7 @@ namespace Titanoboa
             }
 
             // Get the users pending stocks, error if not enough
-            var userStockAmountPending = TransactionHelper.GetStocks(user, stockSymbol, true);
+            var userStockAmountPending = await databaseHelper.GetStocks(user, stockSymbol, true);
             if (userStockAmountPending <= 0)
             {
                 throw new InvalidOperationException("User doesn't have enough stock to sell!.");
@@ -74,8 +73,8 @@ namespace Titanoboa
             numStockToSell = (numStockToSell > userStockAmountPending) ? userStockAmountPending : numStockToSell;
 
             // Set transaction StockAmount and StockPrice
-            TransactionHelper.SetTransactionNumStocks(ref existingSellTrigger, numStockToSell);
-            TransactionHelper.SetTransactionStockPrice(ref existingSellTrigger, sellPrice);
+            await databaseHelper.SetTransactionNumStocks(existingSellTrigger, numStockToSell);
+            await databaseHelper.SetTransactionStockPrice(existingSellTrigger, sellPrice);
 
             // Send new trigger to Twig
             JObject twigTrigger = new JObject();
