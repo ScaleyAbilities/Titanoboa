@@ -110,6 +110,8 @@ namespace Titanoboa
                 await fullCommand.ExecuteNonQueryAsync();
                 fullCommand.Dispose();
             }
+
+            committed = true;
         }
     }
 }

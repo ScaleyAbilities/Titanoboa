@@ -76,7 +76,7 @@ namespace Titanoboa
             );
 
             // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 10, global: false);
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 50, global: false);
 
             rabbitProperties = rabbitChannel.CreateBasicProperties();
             rabbitProperties.Persistent = true;
@@ -120,6 +120,12 @@ namespace Titanoboa
                 basicProperties: rabbitProperties,
                 body: Encoding.UTF8.GetBytes(properties.ToString(Formatting.None))
             );
+        }
+        
+        public static void CloseRabbit()
+        {
+            rabbitChannel.Close();
+            rabbitConnection.Close();
         }
     }
 }

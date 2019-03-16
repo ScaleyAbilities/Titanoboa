@@ -32,7 +32,10 @@ namespace Titanoboa
                         @"SELECT users.*, balance + COALESCE(pending_sum, 0) AS pending_balance
                         FROM users LEFT JOIN (
                             SELECT userid, SUM(balancechange) AS pending_sum FROM transactions
-                            WHERE transactiontime >= NOW() - INTERVAL '60' SECOND AND command = 'BUY' AND type = 'pending'
+                            WHERE (
+                                (transactiontime >= NOW() - INTERVAL '60' SECOND AND command = 'BUY')
+                                OR command = 'BUY_TRIGGER'
+                            ) AND type = 'pending'
                             GROUP BY userid
                         ) t ON t.userid = users.id
                         WHERE users.username = @username";
@@ -218,7 +221,7 @@ namespace Titanoboa
                 command.CommandText = @"SELECT id, command, balancechange, stocksymbol, stockamount, stockprice, type
                                         FROM transactions WHERE userid = @userid
                                         AND command = @commandText
-                                        AND type = 'trigger'
+                                        AND type = 'pending'
                                         LIMIT 1";
 
                 command.Parameters.AddWithValue("@userid", user.Id);
@@ -292,9 +295,9 @@ namespace Titanoboa
             using (var command = GetCommand())
             {
                 command.CommandText = @"UPDATE transactions SET stockAmount = @numStocksToSell 
-                                    WHERE id = @id";
+                                        WHERE id = @id";
 
-                command.Parameters.AddWithValue("@stockPrice", numStockToSell);
+                command.Parameters.AddWithValue("@numStocksToSell", numStockToSell);
                 command.Parameters.AddWithValue("@id", transaction.Id);
                 await command.PrepareAsync();
                 await command.ExecuteNonQueryAsync();
@@ -319,8 +322,9 @@ namespace Titanoboa
                         @"SELECT stocks.amount + COALESCE(pending_sum, 0) AS pending_balance
                           FROM stocks LEFT JOIN (
                               SELECT userid, SUM(stockamount) AS pending_sum FROM transactions
-                              WHERE transactiontime >= NOW() - INTERVAL '60' SECOND
-                              AND command = 'SELL' AND type = 'pending' AND stocksymbol = @stockSymbol
+                              WHERE (
+                                    (transactiontime >= NOW() - INTERVAL '60' SECOND AND command = 'SELL') OR command = 'SELL_TRIGGER'
+                                ) AND type = 'pending' AND stocksymbol = @stockSymbol
                               GROUP BY userid
                           ) t ON t.userid = stocks.userid
                           WHERE stocks.userid = @userid AND stocksymbol = @stockSymbol";
