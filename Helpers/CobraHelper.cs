@@ -32,7 +32,7 @@ namespace Titanoboa
 
             var logger = new Logger();
             logger.LogQuoteServer(user, amount, stockSymbol, user.Username, DateTime.Now.ToString(), cryptokey);
-            logger.CommitLogs();
+            await logger.CommitLogs();
 
             return amount;
         }
