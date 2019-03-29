@@ -23,7 +23,7 @@ namespace Titanoboa
             // Can't have buy price of 0
             if (committedBuyPrice <= 0)
             {
-                throw new InvalidOperationException("Can't have a sell price of 0.");
+                throw new InvalidOperationException("Can't have a buy price of 0.");
             }
 
             // Get the existing trigger transaction to be committed

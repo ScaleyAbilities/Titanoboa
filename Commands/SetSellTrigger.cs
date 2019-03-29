@@ -76,6 +76,16 @@ namespace Titanoboa
             await databaseHelper.SetTransactionNumStocks(existingSellTrigger, numStockToSell);
             await databaseHelper.SetTransactionStockPrice(existingSellTrigger, sellPrice);
 
+            // If trigger can be completed right now then do it
+            var curStockPrice = await databaseHelper.GetStockPrice(user, stockSymbol);
+
+            if(curStockPrice >= sellPrice) 
+            {
+                command = "SET_SELL_TRIGGER";
+                await CommitSellTrigger();
+                return;
+            }
+
             // Send new trigger to Twig
             JObject twigTrigger = new JObject();
             JObject twigParams = new JObject();
