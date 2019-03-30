@@ -24,7 +24,7 @@ namespace Titanoboa
         {
             try
             {
-                ParamHelper.ValidateParamsExist(json, "cmd", "usr");
+                ParamHelper.ValidateParamsExist(json, "cmd");
             }
             catch (ArgumentException ex)
             {
@@ -34,6 +34,13 @@ namespace Titanoboa
 
             string command = json["cmd"].ToString().ToUpper();
             string username = json["usr"].ToString();
+
+            if (command != "DUMPLOG" && string.IsNullOrEmpty(username))
+            {
+                Console.Error.WriteLine($"Error in Queue JSON: Missing username");
+                return;
+            }
+
             JObject commandParams = (JObject)json["params"];
             Logger logger;
 
@@ -81,9 +88,10 @@ namespace Titanoboa
 
                 if (error != null)
                 {
-                    if (errorLevel > 0) // Only print unexpected errors
+                    if (errorLevel > 0) // Only log unexpected errors
+                    {
                         Console.Error.WriteLine(error);
-
+                    }
                     logger = new Logger();
                     logger.LogEvent(Logger.EventType.Error, error);
                 }
@@ -116,6 +124,10 @@ namespace Titanoboa
             }
 
             Console.WriteLine("Quitting...");
+
+            Console.WriteLine("Ending Rabbit connection...");
+            RabbitHelper.CloseRabbit();
+
             Console.WriteLine("Waiting for running tasks to complete...");
 
             while (!runningTasks.IsEmpty)

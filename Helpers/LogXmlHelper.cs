@@ -135,7 +135,7 @@ namespace Titanoboa
 
         private static string UnixTimestamp(DateTime time)
         {
-            return Math.Round((DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000)).ToString();
+            return Math.Round(time.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000).ToString();
         }
     }
 }
