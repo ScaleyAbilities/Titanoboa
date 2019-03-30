@@ -135,7 +135,7 @@ namespace Titanoboa
         {
             rabbitChannel.BasicPublish(
                 exchange: "",
-                routingKey: rabbitTriggerTxQueue,
+                routingKey: rabbitTriggerPending,
                 basicProperties: rabbitProperties,
                 body: Encoding.UTF8.GetBytes(logEntry)
             );
