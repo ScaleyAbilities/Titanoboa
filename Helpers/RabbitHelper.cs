@@ -17,10 +17,10 @@ namespace Titanoboa
         private static IModel rabbitChannel;
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
-        public static string rabbitCommandQueue = "commands";
+        public static string rabbitCommandQueue = "commands-" + Program.InstanceId;
         public static string rabbitLogQueue = "log";
         private static string rabbitTriggerPending = "triggerPending";
-        public static string rabbitTriggerCompleted = "triggerCompleted";
+        public static string rabbitTriggerCompleted = "triggerCompleted-" + Program.InstanceId;
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -91,7 +91,7 @@ namespace Titanoboa
             rabbitProperties.Persistent = true;
         }
 
-        public static void CreateConsumer(Func<JObject, Task> messageCallback, string queue)
+        public static void CreateConsumer(Func<JObject, Task> messageCallback, string queue, int priority = 0)
         {
             var consumer = new AsyncEventingBasicConsumer(rabbitChannel);
             consumer.Received += async (model, eventArgs) =>
@@ -117,12 +117,16 @@ namespace Titanoboa
             rabbitChannel.BasicConsume(
                 queue: queue,
                 autoAck: false,
-                consumer: consumer
+                consumer: consumer,
+                arguments: new Dictionary<string, object>() { { RabbitMQ.Client.Headers.XPriority, priority } }
             );
         }
 
         public static void PushTrigger(JObject properties)
         {
+            // Add return queue to props
+            properties.Add("queue", rabbitTriggerCompleted);            
+
             rabbitChannel.BasicPublish(
                 exchange: "",
                 routingKey: rabbitTriggerPending,

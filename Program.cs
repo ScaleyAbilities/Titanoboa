@@ -16,9 +16,10 @@ namespace Titanoboa
 
         internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
-        private static long nextTaskId = 0;
 
-        public static int InstanceId;
+        internal static string InstanceId = Environment.GetEnvironmentVariable("INSTANCE") ?? "1";
+
+        private static long nextTaskId = 0;
 
         static async Task RunCommands(long taskId, JObject json)
         {
@@ -107,7 +108,7 @@ namespace Titanoboa
             });
             
             RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitCommandQueue);
-            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerCompleted);
+            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerCompleted, 1);
             
             Console.WriteLine("Titanoboa running...");
             Console.WriteLine("Press Ctrl-C to exit.");
