@@ -17,7 +17,7 @@ namespace Titanoboa
 
         private static ConcurrentDictionary<string, Tuple<decimal, DateTime>> quoteCache = new ConcurrentDictionary<string, Tuple<decimal, DateTime>>();
 
-        public static async Task<decimal> GetQuote(User user, string stockSymbol, Logger logger) {
+        public static async Task<decimal> GetQuote(User user, string stockSymbol) {
             Tuple<decimal, DateTime> cachedQuote = null;
             quoteCache.TryGetValue(stockSymbol, out cachedQuote);
             
