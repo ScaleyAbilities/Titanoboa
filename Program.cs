@@ -18,6 +18,8 @@ namespace Titanoboa
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
         private static long nextTaskId = 0;
 
+        public static int InstanceId;
+
         static async Task RunCommands(long taskId, JObject json)
         {
             try
@@ -46,7 +48,6 @@ namespace Titanoboa
             {
                 // Set up a logger for this unit of work
                 logger = new Logger();
-                await logger.Init(command);
             }
             catch (DbException ex)
             {
@@ -63,7 +64,6 @@ namespace Titanoboa
                 try
                 {
                     await commandHandler.Run();
-                    await logger.CommitLogs();
                 }
                 catch (ArgumentException ex)
                 {
@@ -91,9 +91,9 @@ namespace Titanoboa
                     if (errorLevel > 0) // Only log unexpected errors
                     {
                         Console.Error.WriteLine(error);
-                        logger.LogEvent(Logger.EventType.Error, error);
-                        await logger.CommitLogs();
                     }
+                    logger = new Logger();
+                    logger.LogEvent(Logger.EventType.Error, error);
                 }
             }
         }

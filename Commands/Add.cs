@@ -15,7 +15,7 @@ namespace Titanoboa
             var user = await databaseHelper.GetUser(username);
 
             // Log this command
-            logger.LogCommand(user, amount);
+            logger.LogCommand(user, command, amount);
 
             // Update existing user balance
             decimal newBalance = user.Balance + amount;

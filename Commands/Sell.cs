@@ -21,7 +21,7 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
             var user = await databaseHelper.GetUser(username);
 
-            logger.LogCommand(user, sellAmount, stockSymbol);
+            logger.LogCommand(user, command, sellAmount, stockSymbol);
 
             // Get current stock price
             var stockPrice = await databaseHelper.GetStockPrice(user, stockSymbol);

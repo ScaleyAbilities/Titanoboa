@@ -28,15 +28,13 @@ namespace Titanoboa
             if (!string.IsNullOrEmpty(username))
             {
                 var user = await databaseHelper.GetUser(username);
-                logger.LogCommand(user, null, null, filename);
-                await logger.CommitLogs();
+                logger.LogCommand(user, command, null, null, filename);
                 await Program.WaitForTasksUpTo(taskId);
                 await LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
-                logger.LogCommand(null, null, null, filename);
-                await logger.CommitLogs();
+                logger.LogCommand(null, command, null, null, filename);
                 await Program.WaitForTasksUpTo(taskId);
                 await LogXmlHelper.CreateLog(filename);
             }

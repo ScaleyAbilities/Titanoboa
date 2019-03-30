@@ -26,7 +26,7 @@ namespace Titanoboa
             var user = await databaseHelper.GetUser(username, true);
 
             // Log the command
-            logger.LogCommand(user, amount, stockSymbol);
+            logger.LogCommand(user, command, amount, stockSymbol);
             
             if (user.PendingBalance < amount)
             {

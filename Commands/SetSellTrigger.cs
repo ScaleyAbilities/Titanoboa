@@ -25,7 +25,7 @@ namespace Titanoboa
             var stockSymbol = commandParams["stock"].ToString();
 
             // Log command
-            logger.LogCommand(user, sellPrice, stockSymbol);
+            logger.LogCommand(user, command, sellPrice, stockSymbol);
             
             // Can't have a sell price of 0
             if (sellPrice == 0)

@@ -17,7 +17,7 @@ namespace Titanoboa
             // Get user
             var user = await databaseHelper.GetUser(username);
 
-            logger.LogCommand(user, null, stockSymbol);
+            logger.LogCommand(user, command, null, stockSymbol);
 
             // Get trigger to cancel
             var existingSetBuyTrigger = await databaseHelper.GetTriggerTransaction(user, stockSymbol, "BUY_TRIGGER");

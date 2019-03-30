@@ -16,7 +16,7 @@ namespace Titanoboa
             var buyAmountInDollars = (decimal)commandParams["amount"];
             var stockSymbol = commandParams["stock"].ToString();
 
-            logger.LogCommand(user, buyAmountInDollars, stockSymbol);
+            logger.LogCommand(user, command, buyAmountInDollars, stockSymbol);
 
             // Doesn't make sense to buy 0$ worth of stocks
             if (buyAmountInDollars == 0)
