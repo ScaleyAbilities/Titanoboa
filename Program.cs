@@ -107,7 +107,7 @@ namespace Titanoboa
             });
             
             RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitCommandQueue);
-            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerRxQueue);
+            RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerCompleted);
             
             Console.WriteLine("Titanoboa running...");
             Console.WriteLine("Press Ctrl-C to exit.");

@@ -19,8 +19,8 @@ namespace Titanoboa
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
         public static string rabbitCommandQueue = "commands";
         public static string rabbitLogQueue = "log";
-        private static string rabbitTriggerTxQueue = "triggerPending";
-        public static string rabbitTriggerRxQueue = "triggerCompleted";
+        private static string rabbitTriggerPending = "triggerPending";
+        public static string rabbitTriggerCompleted = "triggerCompleted";
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -69,7 +69,7 @@ namespace Titanoboa
             );
 
             rabbitChannel.QueueDeclare(
-                queue: rabbitTriggerTxQueue,
+                queue: rabbitTriggerPending,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -77,7 +77,7 @@ namespace Titanoboa
             );
 
             rabbitChannel.QueueDeclare(
-                queue: rabbitTriggerRxQueue,
+                queue: rabbitTriggerCompleted,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -125,7 +125,7 @@ namespace Titanoboa
         {
             rabbitChannel.BasicPublish(
                 exchange: "",
-                routingKey: rabbitTriggerTxQueue,
+                routingKey: rabbitTriggerPending,
                 basicProperties: rabbitProperties,
                 body: Encoding.UTF8.GetBytes(properties.ToString(Formatting.None))
             );
