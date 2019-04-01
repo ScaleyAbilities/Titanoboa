@@ -17,17 +17,18 @@ namespace Titanoboa
             Debug
         }
         
-        private StringBuilder logString = new StringBuilder();
+        private StringBuilder logString = new StringBuilder(Program.ServerName, 500);
         private bool committed = false;
 
-        public void LogCommand(User user = null, String command = null, decimal? amount = null, string stockSymbol = null, string dumpfilename = null)
+        public void LogCommand(User user = null, String command = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
-            logString.AppendLine($"c,{command},{WorkId}{Program.InstanceId},{user.Username},{amount},{stockSymbol},{dumpfilename}");
+            logString.AppendLine($"c,{command},{user.Username},{amount},{stockSymbol},{filename},{Timestamp()}");
         }
 
         public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
-            logString.AppendLine($"e,{type},\"{message}\",{WorkId}{Program.InstanceId},{user.Username},{amount},{stockSymbol},{filename}");
+            // Note, message intentionally goes at the end so it can include commas
+            logString.AppendLine($"e,{type},{user.Username},{amount},{stockSymbol},{filename},{Timestamp()},{message}");
         }
 
         public void LogTransaction(Transaction transaction)
@@ -38,7 +39,8 @@ namespace Titanoboa
             else
                 message = $"{transaction.Command} ({transaction.Type}, stock {transaction.StockSymbol})";
 
-            logString.AppendLine($"t,\"{message}\",{WorkId}{Program.InstanceId},{transaction.User.Username},{transaction.BalanceChange}");
+            // Note, message intentionally goes at the end so it can include commas
+            logString.AppendLine($"t,{transaction.User.Username},{transaction.BalanceChange},{Timestamp()},{message}");
         }
 
         public void CommitLog()
@@ -46,11 +48,16 @@ namespace Titanoboa
             if (committed)
                 throw new InvalidOperationException("Cannot commit log twice");
 
-            if (logString.Length < 1)
+            if (!logString.ToString().Contains(Environment.NewLine))
                 return; // Nothing to commit
     
             RabbitHelper.PushLogEntry(logString.ToString());
             committed = true;
+        }
+
+        private static string Timestamp()
+        {
+            return Math.Round(DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds * 1000).ToString();
         }
     }
 }
