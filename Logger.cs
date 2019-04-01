@@ -17,24 +17,17 @@ namespace Titanoboa
             Debug
         }
         
-        public int WorkId;
+        private StringBuilder logString = new StringBuilder();
+        private bool committed = false;
 
         public void LogCommand(User user = null, String command = null, decimal? amount = null, string stockSymbol = null, string dumpfilename = null)
         {
-            string logCommand = $"command, {command}, {WorkId}{Program.InstanceId}, {user.Id}, {amount}, {stockSymbol}, {dumpfilename}";
-            RabbitHelper.PushLogEntry(logCommand);
-        }
-
-        public void LogQuoteServer(User user, decimal? amount, string quoteStockSymbol, string quoteUserId, string quoteServerTime, string cryptoKey)
-        {
-            string logCommand = $"quote, {WorkId}{Program.InstanceId}, {user.Id}, {amount}, {quoteStockSymbol}, {quoteUserId}, {quoteServerTime}, {cryptoKey}";
-            RabbitHelper.PushLogEntry(logCommand);
+            logString.AppendLine($"c,{command},{WorkId}{Program.InstanceId},{user.Username},{amount},{stockSymbol},{dumpfilename}");
         }
 
         public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
-            string logCommand = $"{type}, {message}, {WorkId}{Program.InstanceId}, {user.Id}, {amount}, {stockSymbol}, {filename}";
-            RabbitHelper.PushLogEntry(logCommand);
+            logString.AppendLine($"e,{type},\"{message}\",{WorkId}{Program.InstanceId},{user.Username},{amount},{stockSymbol},{filename}");
         }
 
         public void LogTransaction(Transaction transaction)
@@ -45,8 +38,19 @@ namespace Titanoboa
             else
                 message = $"{transaction.Command} ({transaction.Type}, stock {transaction.StockSymbol})";
 
-            string logCommand = $"transaction, {message}, {WorkId}{Program.InstanceId}, {transaction.User.Id}, {transaction.BalanceChange}";
-            RabbitHelper.PushLogEntry(logCommand); 
+            logString.AppendLine($"t,\"{message}\",{WorkId}{Program.InstanceId},{transaction.User.Username},{transaction.BalanceChange}");
+        }
+
+        public void CommitLog()
+        {
+            if (committed)
+                throw new InvalidOperationException("Cannot commit log twice");
+
+            if (logString.Length < 1)
+                return; // Nothing to commit
+    
+            RabbitHelper.PushLogEntry(logString.ToString());
+            committed = true;
         }
     }
 }

@@ -29,15 +29,13 @@ namespace Titanoboa
             {
                 var user = await databaseHelper.GetUser(username);
                 logger.LogCommand(user, command, null, null, filename);
-                await Program.WaitForTasksUpTo(taskId);
-                await LogXmlHelper.CreateLog(filename, user);
             }
             else
             {
                 logger.LogCommand(null, command, null, null, filename);
-                await Program.WaitForTasksUpTo(taskId);
-                await LogXmlHelper.CreateLog(filename);
             }
+                
+            // Loma will see the DUMPLOG command and generate the file
         }
     }
 }

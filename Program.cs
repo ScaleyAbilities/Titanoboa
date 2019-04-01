@@ -43,18 +43,7 @@ namespace Titanoboa
             }
 
             JObject commandParams = (JObject)json["params"];
-            Logger logger;
-
-            try
-            {
-                // Set up a logger for this unit of work
-                logger = new Logger();
-            }
-            catch (DbException ex)
-            {
-                Console.Error.WriteLine($"Unable to create logger due to SQL error: {ex.Message}");
-                return;
-            }
+            Logger logger = new Logger();
 
             using (var connection = await SqlHelper.GetConnection())
             using (var dbHelper = new DatabaseHelper(connection, logger))
@@ -93,9 +82,10 @@ namespace Titanoboa
                     {
                         Console.Error.WriteLine(error);
                     }
-                    logger = new Logger();
                     logger.LogEvent(Logger.EventType.Error, error);
                 }
+
+                logger.CommitLog();
             }
         }
 
@@ -115,12 +105,12 @@ namespace Titanoboa
 
             while (true)
             {
-                var completed = await Task.WhenAny(quitSignalled.Task, Task.Delay(5000));
+                var completed = await Task.WhenAny(quitSignalled.Task, Task.Delay(10000));
 
                 if (completed == quitSignalled.Task)
                     break;
 
-                // We clean up finished tasks every 5 seconds
+                // We clean up finished tasks every 10 seconds
                 CleanupFinishedTasks();
             }
 

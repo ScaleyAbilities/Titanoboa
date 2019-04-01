@@ -17,10 +17,10 @@ namespace Titanoboa
         private static IModel rabbitChannel;
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
-        public static string rabbitCommandQueue = "commands-" + Program.InstanceId;
-        public static string rabbitLogQueue = "log";
+        public static string rabbitCommandQueue = $"commands.{Program.InstanceId}";
+        public static string rabbitLogQueue = "logs";
         private static string rabbitTriggerPending = "triggerPending";
-        public static string rabbitTriggerCompleted = "triggerCompleted-" + Program.InstanceId;
+        public static string rabbitTriggerCompleted = $"triggerCompleted.{Program.InstanceId}";
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -85,7 +85,7 @@ namespace Titanoboa
             );
 
             // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 50, global: false);
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 200, global: false);
 
             rabbitProperties = rabbitChannel.CreateBasicProperties();
             rabbitProperties.Persistent = true;
@@ -135,11 +135,11 @@ namespace Titanoboa
             );
         }
 
-        public static void PushLogEntry(String logEntry)
+        public static void PushLogEntry(string logEntry)
         {
             rabbitChannel.BasicPublish(
                 exchange: "",
-                routingKey: rabbitTriggerPending,
+                routingKey: rabbitLogQueue,
                 basicProperties: rabbitProperties,
                 body: Encoding.UTF8.GetBytes(logEntry)
             );
