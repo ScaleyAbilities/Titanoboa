@@ -30,7 +30,7 @@ namespace Titanoboa
             {
                 var response = await client.GetAsync($"{quoteApi}/quote/{user.Username}/{stockSymbol}/{transactionId}");
                 response.EnsureSuccessStatusCode();
-                var json = new JObject(await response.Content.ReadAsStringAsync());
+                var json = JObject.Parse(await response.Content.ReadAsStringAsync());
                 return (decimal)json["amount"];
             }
         }

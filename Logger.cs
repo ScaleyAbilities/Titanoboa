@@ -19,18 +19,24 @@ namespace Titanoboa
         
         public string TransactionId = Guid.NewGuid().ToString("N");
 
-        private StringBuilder logString = new StringBuilder($"{Program.ServerName},{TransactionId}", 500);
+        private StringBuilder logString;
         private bool committed = false;
 
-        public void LogCommand(User user = null, String command = null, decimal? amount = null, string stockSymbol = null, string filename = null)
+        public Logger()
         {
-            logString.AppendLine($"c,{command},{user.Username},{amount},{stockSymbol},{filename},{Timestamp()}");
+            logString = new StringBuilder(500);
+            logString.AppendLine($"{Program.ServerName},{TransactionId}");
+        }
+
+        public void LogCommand(User user = null, string command = null, decimal? amount = null, string stockSymbol = null, string filename = null)
+        {
+            logString.AppendLine($"c,{command},{user?.Username},{amount},{stockSymbol},{filename},{Timestamp()}");
         }
 
         public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
             // Note, message intentionally goes at the end so it can include commas
-            logString.AppendLine($"e,{type.ToString().ToLower()},{user.Username},{amount},{stockSymbol},{filename},{Timestamp()},{message}");
+            logString.AppendLine($"e,{type.ToString().ToLower()},{user?.Username},{amount},{stockSymbol},{filename},{Timestamp()},{message}");
         }
 
         public void LogTransaction(Transaction transaction)
@@ -42,7 +48,7 @@ namespace Titanoboa
                 message = $"{transaction.Command} ({transaction.Type}, stock {transaction.StockSymbol})";
 
             // Note, message intentionally goes at the end so it can include commas
-            logString.AppendLine($"t,{transaction.User.Username},{transaction.BalanceChange},{Timestamp()},{message}");
+            logString.AppendLine($"t,{transaction.User?.Username},{transaction.BalanceChange},{Timestamp()},{message}");
         }
 
         public void CommitLog()

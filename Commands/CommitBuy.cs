@@ -15,7 +15,7 @@ namespace Titanoboa
         public async Task CommitBuy() {
             var user = await databaseHelper.GetUser(username, false);
 
-            logger.LogCommand(user);
+            logger.LogCommand(user, command);
             
             var transaction = await databaseHelper.GetLatestPendingTransaction(user, "BUY");
             if (transaction == null)

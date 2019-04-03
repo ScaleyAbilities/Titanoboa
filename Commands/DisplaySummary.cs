@@ -17,7 +17,7 @@ namespace Titanoboa
         {
             // TODO: this
             var user = await databaseHelper.GetUser(username);
-            logger.LogCommand(user);
+            logger.LogCommand(user, command);
         }
     }
 }
