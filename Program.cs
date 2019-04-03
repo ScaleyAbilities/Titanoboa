@@ -43,7 +43,7 @@ namespace Titanoboa
             }
 
             JObject commandParams = (JObject)json["params"];
-            Logger logger = new Logger();
+            Logger logger = new Logger(command);
 
             using (var connection = await SqlHelper.GetConnection())
             using (var dbHelper = new DatabaseHelper(connection, logger))

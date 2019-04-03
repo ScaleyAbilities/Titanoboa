@@ -22,8 +22,11 @@ namespace Titanoboa
         private StringBuilder logString;
         private bool committed = false;
 
-        public Logger()
+        private string command;
+
+        public Logger(string command)
         {
+            this.command = command;
             logString = new StringBuilder(500);
             logString.AppendLine($"{Program.ServerName},{TransactionId}");
         }
@@ -36,7 +39,7 @@ namespace Titanoboa
         public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
             // Note, message intentionally goes at the end so it can include commas
-            logString.AppendLine($"e,{type.ToString().ToLower()},{user?.Username},{amount},{stockSymbol},{filename},{Timestamp()},{message}");
+            logString.AppendLine($"e,{type.ToString().ToLower()},{command},{user?.Username},{amount},{stockSymbol},{filename},{Timestamp()},{message}");
         }
 
         public void LogTransaction(Transaction transaction)
