@@ -211,7 +211,7 @@ namespace Titanoboa
 
         public async Task<decimal> GetStockPrice(User user, string stockSymbol)
         {
-            return await QuoteHelper.GetQuote(user, stockSymbol);
+            return await QuoteHelper.GetQuote(user, stockSymbol, logger.TransactionId);
         }
 
         public async Task<Transaction> GetTriggerTransaction(User user, string stockSymbol, string triggerType)

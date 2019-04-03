@@ -75,6 +75,7 @@ namespace Titanoboa
             twigParams.Add("stock", existingBuyTrigger.StockSymbol);
             twigParams.Add("price", buyPrice);
             twigTrigger.Add("params", twigParams);
+            twigTrigger.Add("tid", logger.TransactionId);
             RabbitHelper.PushTrigger(twigTrigger);
         }
     }

@@ -17,7 +17,7 @@ namespace Titanoboa
 
         private static ConcurrentDictionary<string, Tuple<decimal, DateTime>> quoteCache = new ConcurrentDictionary<string, Tuple<decimal, DateTime>>();
 
-        public static async Task<decimal> GetQuote(User user, string stockSymbol) {
+        public static async Task<decimal> GetQuote(User user, string stockSymbol, string transactionId) {
             Tuple<decimal, DateTime> cachedQuote = null;
             quoteCache.TryGetValue(stockSymbol, out cachedQuote);
             
@@ -28,7 +28,7 @@ namespace Titanoboa
             // Get value from Cobra
             using (var client = new HttpClient())
             {
-                var response = await client.GetAsync($"{quoteApi}/quote/{user.Username}/{stockSymbol}");
+                var response = await client.GetAsync($"{quoteApi}/quote/{user.Username}/{stockSymbol}/{transactionId}");
                 response.EnsureSuccessStatusCode();
                 var json = new JObject(await response.Content.ReadAsStringAsync());
                 return (decimal)json["amount"];
