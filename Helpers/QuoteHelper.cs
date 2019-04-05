@@ -21,7 +21,7 @@ namespace Titanoboa
             Tuple<decimal, DateTime> cachedQuote = null;
             quoteCache.TryGetValue(stockSymbol, out cachedQuote);
             
-            if (cachedQuote != null && cachedQuote.Item2.AddMinutes(1) <= DateTime.Now) {
+            if (cachedQuote != null && cachedQuote.Item2.AddMinutes(1) >= DateTime.Now) {
                 return cachedQuote.Item1;
             }
 
@@ -31,7 +31,11 @@ namespace Titanoboa
                 var response = await client.GetAsync($"{quoteApi}/quote/{user.Username}/{stockSymbol}/{transactionId}");
                 response.EnsureSuccessStatusCode();
                 var json = JObject.Parse(await response.Content.ReadAsStringAsync());
-                return (decimal)json["amount"];
+
+                var amount = (decimal)json["amount"];
+                quoteCache[stockSymbol] = new Tuple<decimal, DateTime>(amount, DateTime.Now);
+
+                return amount;
             }
         }
     }
