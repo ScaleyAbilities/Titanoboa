@@ -71,7 +71,7 @@ namespace Titanoboa
             JObject twigTrigger = new JObject();
             JObject twigParams = new JObject();
             twigTrigger.Add("usr", username);
-            twigTrigger.Add("cmd", "SELL");
+            twigTrigger.Add("cmd", "BUY");
             twigParams.Add("stock", existingBuyTrigger.StockSymbol);
             twigParams.Add("price", buyPrice);
             twigTrigger.Add("params", twigParams);
