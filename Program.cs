@@ -93,7 +93,8 @@ namespace Titanoboa
                 logger.CommitLog();
             }
 
-            if (!string.IsNullOrEmpty(returnRef))
+            // Return a response to rabbit if command is not DUMPLOG (Lora will return those)
+            if (!string.IsNullOrEmpty(returnRef) && command != "DUMPLOG")
             {
                 var returnJson = new JObject();
                 returnJson.Add("ref", returnRef);

@@ -23,6 +23,7 @@ namespace Titanoboa
         public static string rabbitTriggerCompleted = $"triggerCompleted";
         public static string rabbitInstanceQueue = "instance";
         public static string rabbitResponseQueue = "response";
+        
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()

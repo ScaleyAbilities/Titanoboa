@@ -56,7 +56,7 @@ namespace Titanoboa
 
         public void RequestLog(string username, string returnRef)
         {
-            logString.AppendLine($"$r,{username},{returnRef}");
+            logString.AppendLine($"r,{username},{returnRef}");
         }
 
         public void CommitLog()
