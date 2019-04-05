@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.Threading.Tasks;
@@ -90,6 +91,30 @@ namespace Titanoboa
                     logger.LogEvent(Logger.EventType.Debug, $"Created new user", user);
 
                 return user;
+            }
+        }
+
+        public async Task<Dictionary<string, decimal>> GetUserSummary(User user)
+        {
+            using (var command = GetCommand())
+            {
+                command.CommandText = "SELECT stocksymbol, amount FROM stocks WHERE userid = @userid";
+                command.Parameters.AddWithValue("@userid", user.Id);
+                await command.PrepareAsync();
+
+                var userStocks = new Dictionary<string, decimal>();
+                
+                using (var reader = await command.ExecuteReaderAsync())
+                {
+                    while (await reader.ReadAsync())
+                    {
+                        var stock = (string)reader["stocksymbol"];
+                        var amount = (int)reader["amount"];
+                        userStocks.Add(stock, amount);
+                    };
+                }
+
+                return userStocks;
             }
         }
 

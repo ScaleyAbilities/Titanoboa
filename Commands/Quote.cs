@@ -20,9 +20,15 @@ namespace Titanoboa
 
             logger.LogCommand(user, command, null, stockSymbol);
 
-            var stockPrice = await databaseHelper.GetStockPrice(user, stockSymbol);
+            // If we aren't returning anything then return here
+            if (string.IsNullOrEmpty(returnRef))
+                return;
 
-            // TODO: Do something with price
+            var stockPrice = await databaseHelper.GetStockPrice(user, stockSymbol);
+            var ret = new JObject();
+            ret.Add(stockSymbol, stockPrice);
+
+            returnValue = ret;
         }
     }
 }

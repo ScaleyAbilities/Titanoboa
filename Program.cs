@@ -17,7 +17,7 @@ namespace Titanoboa
         internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-        internal static string InstanceId;
+        internal static string InstanceId = Environment.GetEnvironmentVariable("AUTO_INSTANCE") == "TRUE" ? null : "1";
 
         private static long nextTaskId = 0;
 
@@ -33,8 +33,11 @@ namespace Titanoboa
                 return;
             }
 
-            string command = json["cmd"].ToString().ToUpper();
-            string username = json["usr"].ToString();
+            var command = json["cmd"].ToString().ToUpper();
+            var username = json["usr"]?.ToString();
+
+            // This is used to return values to frontend. It will be null for workload files.
+            var returnRef = json["ref"]?.ToString();
 
             if (command != "DUMPLOG" && string.IsNullOrEmpty(username))
             {
@@ -44,13 +47,15 @@ namespace Titanoboa
 
             JObject commandParams = (JObject)json["params"];
             Logger logger = new Logger(command);
+            
+            string error = null;
+            var errorLevel = 0; // 0 = lowest, 2 = highest
+            CommandHandler commandHandler;
 
             using (var connection = await SqlHelper.GetConnection())
             using (var dbHelper = new DatabaseHelper(connection, logger))
             {
-                string error = null;
-                int errorLevel = 0; // 0 = lowest, 2 = highest
-                var commandHandler = new CommandHandler(username, command, commandParams, dbHelper, logger, taskId);
+                commandHandler = new CommandHandler(username, command, commandParams, dbHelper, logger, taskId, returnRef);
                 try
                 {
                     await commandHandler.Run();
@@ -87,6 +92,16 @@ namespace Titanoboa
 
                 logger.CommitLog();
             }
+
+            if (!string.IsNullOrEmpty(returnRef))
+            {
+                var returnJson = new JObject();
+                returnJson.Add("ref", returnRef);
+                returnJson.Add("status", error == null ? "ok" : "error");
+                returnJson.Add("data", error == null ? (dynamic)commandHandler.returnValue : error);
+
+                RabbitHelper.PushResponse(returnJson);
+            }
         }
 
         static async Task Main(string[] args)
@@ -97,9 +112,12 @@ namespace Titanoboa
                 eventArgs.Cancel = true; // Prevent program from quitting right away
             });
 
-            Console.WriteLine("Getting instance...");
-            InstanceId = RabbitHelper.GetInstance();
-            Console.WriteLine($"Got instance {InstanceId}");
+            if (InstanceId == null)
+            {
+                Console.WriteLine("Getting instance...");
+                InstanceId = RabbitHelper.GetInstance();
+                Console.WriteLine($"Got instance {InstanceId}");
+            }
 
             RabbitHelper.CreateQueues();
             

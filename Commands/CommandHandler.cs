@@ -12,8 +12,11 @@ namespace Titanoboa
         private DatabaseHelper databaseHelper;
         private Logger logger;
         private long taskId;
+        private string returnRef;
+        
+        public JObject returnValue { get; set; }
 
-        public CommandHandler(string username, string command, JObject commandParams, DatabaseHelper databaseHelper, Logger logger, long taskId)
+        public CommandHandler(string username, string command, JObject commandParams, DatabaseHelper databaseHelper, Logger logger, long taskId, string returnRef = null)
         {
             this.username = username;
             this.command = command;
@@ -21,6 +24,7 @@ namespace Titanoboa
             this.databaseHelper = databaseHelper;
             this.logger = logger;
             this.taskId = taskId;
+            this.returnRef = returnRef;
         }
 
         public async Task Run()

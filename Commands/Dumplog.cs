@@ -34,8 +34,12 @@ namespace Titanoboa
             {
                 logger.LogCommand(null, command, null, null, filename);
             }
-                
-            // Loma will see the DUMPLOG command and generate the file
+
+            // If we are returing a value, tell Lora
+            if (!string.IsNullOrEmpty(returnRef))
+            {
+                logger.RequestLog(username, returnRef);
+            }
         }
     }
 }

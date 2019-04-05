@@ -22,6 +22,7 @@ namespace Titanoboa
         private static string rabbitTriggerPending = "triggerPending";
         public static string rabbitTriggerCompleted = $"triggerCompleted";
         public static string rabbitInstanceQueue = "instance";
+        public static string rabbitResponseQueue = "response";
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -91,6 +92,14 @@ namespace Titanoboa
 
             rabbitChannel.QueueDeclare(
                 queue: rabbitTriggerCompleted,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
+
+            rabbitChannel.QueueDeclare(
+                queue: rabbitResponseQueue,
                 durable: true,
                 exclusive: false,
                 autoDelete: false,
@@ -180,6 +189,16 @@ namespace Titanoboa
                 routingKey: rabbitLogQueue,
                 basicProperties: rabbitProperties,
                 body: Encoding.UTF8.GetBytes(logEntry)
+            );
+        }
+
+        public static void PushResponse(JObject responseJson)
+        {
+            rabbitChannel.BasicPublish(
+                exchange: "",
+                routingKey: rabbitResponseQueue,
+                basicProperties: rabbitProperties,
+                body: Encoding.UTF8.GetBytes(responseJson.ToString(Formatting.None))
             );
         }
         

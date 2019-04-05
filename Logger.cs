@@ -54,6 +54,11 @@ namespace Titanoboa
             logString.AppendLine($"t,{transaction.User?.Username},{transaction.BalanceChange},{Timestamp()},{message}");
         }
 
+        public void RequestLog(string username, string returnRef)
+        {
+            logString.AppendLine($"$r,{username},{returnRef}");
+        }
+
         public void CommitLog()
         {
             if (committed)
