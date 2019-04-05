@@ -17,7 +17,7 @@ namespace Titanoboa
         internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-        internal static string InstanceId = Environment.GetEnvironmentVariable("INSTANCE") ?? "1";
+        internal static string InstanceId;
 
         private static long nextTaskId = 0;
 
@@ -96,6 +96,12 @@ namespace Titanoboa
                 quitSignalled.SetResult(true);
                 eventArgs.Cancel = true; // Prevent program from quitting right away
             });
+
+            Console.WriteLine("Getting instance...");
+            InstanceId = RabbitHelper.GetInstance();
+            Console.WriteLine($"Got instance {InstanceId}");
+
+            RabbitHelper.CreateQueues();
             
             RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitCommandQueue);
             RabbitHelper.CreateConsumer(RabbitConsumer, RabbitHelper.rabbitTriggerCompleted, 1);

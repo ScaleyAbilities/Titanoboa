@@ -10,7 +10,7 @@ namespace Titanoboa
         public async Task CommitSellTrigger()
         {
             // Sanity check
-            ParamHelper.ValidateParamsExist(commandParams, "price", "stock");
+            CheckParams("price", "stock");
 
             // Get params
             var user = await databaseHelper.GetUser(username);

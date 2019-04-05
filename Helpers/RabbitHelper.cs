@@ -17,10 +17,11 @@ namespace Titanoboa
         private static IModel rabbitChannel;
 
         private static string rabbitHost = Environment.GetEnvironmentVariable("RABBIT_HOST") ?? "localhost";
-        public static string rabbitCommandQueue = $"commands.{Program.InstanceId}";
+        public static string rabbitCommandQueue = $"commands";
         public static string rabbitLogQueue = "logs";
         private static string rabbitTriggerPending = "triggerPending";
-        public static string rabbitTriggerCompleted = $"triggerCompleted.{Program.InstanceId}";
+        public static string rabbitTriggerCompleted = $"triggerCompleted";
+        public static string rabbitInstanceQueue = "instance";
         private static IBasicProperties rabbitProperties;
 
         static RabbitHelper()
@@ -51,6 +52,18 @@ namespace Titanoboa
             }
 
             rabbitChannel = rabbitConnection.CreateModel();
+
+            // This makes Rabbit wait for an ACK before sending us the next message
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 200, global: false);
+
+            rabbitProperties = rabbitChannel.CreateBasicProperties();
+            rabbitProperties.Persistent = true;
+        }
+
+        public static void CreateQueues()
+        {
+            rabbitCommandQueue += $".{Program.InstanceId}";
+            rabbitTriggerCompleted += $".{Program.InstanceId}";
 
             rabbitChannel.QueueDeclare(
                 queue: rabbitCommandQueue,
@@ -83,12 +96,37 @@ namespace Titanoboa
                 autoDelete: false,
                 arguments: null
             );
+        }
 
-            // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 200, global: false);
+        public static string GetInstance()
+        {
+            rabbitChannel.QueueDeclare(
+                queue: rabbitInstanceQueue,
+                durable: true,
+                exclusive: false,
+                autoDelete: false,
+                arguments: null
+            );
 
-            rabbitProperties = rabbitChannel.CreateBasicProperties();
-            rabbitProperties.Persistent = true;
+            BasicGetResult message = null;
+
+            while (message == null)
+            {
+                message = rabbitChannel.BasicGet(rabbitInstanceQueue, true);
+                Thread.Sleep(1000);
+            }
+            
+            var instance = Encoding.UTF8.GetString(message.Body);
+            var nextInstance = int.Parse(instance) + 1;
+
+            rabbitChannel.BasicPublish(
+                exchange: "",
+                routingKey: rabbitInstanceQueue,
+                basicProperties: rabbitProperties,
+                body: Encoding.UTF8.GetBytes(nextInstance.ToString())
+            );
+
+            return instance;
         }
 
         public static void CreateConsumer(Func<JObject, Task> messageCallback, string queue, int priority = 0)
