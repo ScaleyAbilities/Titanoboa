@@ -51,6 +51,10 @@ namespace Titanoboa
             var moneyMade = committedSellPrice * numStocksToSell;
             var newUserBalance = user.Balance + moneyMade;
             await databaseHelper.UpdateUserBalance(user, newUserBalance);
+
+            var userStockAmount = await databaseHelper.GetStocks(user, stockSymbol);
+            var newStockAmount = userStockAmount - numStocksToSell;
+            await databaseHelper.UpdateStocks(user, stockSymbol, newStockAmount);
     
             // Set transaction StockAmount and StockPrice, mark as completed
             await databaseHelper.SetTransactionStockPrice(existingSellTrigger, committedSellPrice);

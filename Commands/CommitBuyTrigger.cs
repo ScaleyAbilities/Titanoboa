@@ -52,6 +52,10 @@ namespace Titanoboa
             var newUserBalance = user.Balance - totalCost;
             await databaseHelper.UpdateUserBalance(user, newUserBalance);
 
+            var userStockAmount = await databaseHelper.GetStocks(user, stockSymbol);
+            var newStockAmount = userStockAmount + numStocksToBuy;
+            await databaseHelper.UpdateStocks(user, stockSymbol, newStockAmount);
+
             // Update and commit the transaction
             await databaseHelper.SetTransactionBalanceChange(existingBuyTrigger, totalCost); 
             await databaseHelper.SetTransactionStockPrice(existingBuyTrigger, committedBuyPrice);
