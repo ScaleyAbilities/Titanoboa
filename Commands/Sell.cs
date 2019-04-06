@@ -42,9 +42,6 @@ namespace Titanoboa
             // Set balance change
             var balanceChange = stockAmount * stockPrice;
 
-            // Set NEGATIVE stockAmount (to remove from stocks table in COMMIT_SELL)
-            stockAmount = -stockAmount;
-
             await databaseHelper.CreateTransaction(user, stockSymbol, "SELL", balanceChange, stockAmount, stockPrice, "pending");
         } 
     }
