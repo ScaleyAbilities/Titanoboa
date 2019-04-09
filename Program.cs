@@ -45,6 +45,17 @@ namespace Titanoboa
                 return;
             }
 
+            SemaphoreSlim userLock = null;
+            if (!string.IsNullOrEmpty(username))
+            {
+                if (!userLocks.TryGetValue(username, out userLock))
+                {
+                    userLock = userLocks[username] = new SemaphoreSlim(1);
+                }
+
+                await userLock.WaitAsync();
+            }
+
             JObject commandParams = (JObject)json["params"];
             Logger logger = new Logger(command);
             
@@ -90,6 +101,7 @@ namespace Titanoboa
                     logger.LogEvent(Logger.EventType.Error, error);
                 }
 
+                userLock?.Release();
                 logger.CommitLog();
             }
 
