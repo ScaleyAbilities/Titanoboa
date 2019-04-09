@@ -38,6 +38,9 @@ namespace Titanoboa
 
         public void LogEvent(EventType type, string message, User user = null, decimal? amount = null, string stockSymbol = null, string filename = null)
         {
+            if (type == EventType.Debug)
+                return; // TEMPORARY TO REDUCE LOG SIZE ON FINAL WORKLOAD
+
             // Note, message intentionally goes at the end so it can include commas
             logString.AppendLine($"e,{type.ToString().ToLower()},{command},{user?.Username},{amount},{stockSymbol},{filename},{Timestamp()},{message}");
         }
