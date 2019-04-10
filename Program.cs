@@ -17,6 +17,8 @@ namespace Titanoboa
         internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
+        internal static SemaphoreSlim workLimiter = new SemaphoreSlim(50);
+
         internal static string InstanceId = Environment.GetEnvironmentVariable("AUTO_INSTANCE") == "TRUE" ? null : "1";
 
         private static long nextTaskId = 0;
@@ -115,6 +117,8 @@ namespace Titanoboa
 
                 RabbitHelper.PushResponse(returnJson);
             }
+
+            workLimiter.Release();
         }
 
         static async Task Main(string[] args)
@@ -191,6 +195,7 @@ namespace Titanoboa
 
         private static Task RabbitConsumer(JObject json)
         {
+            workLimiter.Wait();
             var id = nextTaskId++;
             var task = RunCommands(id, json);
             runningTasks.Append((id, task));

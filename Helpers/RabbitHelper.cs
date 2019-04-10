@@ -56,7 +56,7 @@ namespace Titanoboa
             rabbitChannel = rabbitConnection.CreateModel();
 
             // This makes Rabbit wait for an ACK before sending us the next message
-            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 200, global: false);
+            rabbitChannel.BasicQos(prefetchSize: 0, prefetchCount: 75, global: false);
 
             rabbitProperties = rabbitChannel.CreateBasicProperties();
             rabbitProperties.Persistent = true;
