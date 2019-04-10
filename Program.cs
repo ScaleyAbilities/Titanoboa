@@ -17,7 +17,7 @@ namespace Titanoboa
         internal static ConcurrentQueue<(long id, Task task)> runningTasks = new ConcurrentQueue<(long id, Task task)>();
         internal static ConcurrentDictionary<string, SemaphoreSlim> userLocks = new ConcurrentDictionary<string, SemaphoreSlim>();
 
-        internal static SemaphoreSlim workLimiter = new SemaphoreSlim(10);
+        internal static SemaphoreSlim workLimiter = new SemaphoreSlim(15);
 
         internal static string InstanceId = Environment.GetEnvironmentVariable("AUTO_INSTANCE") == "TRUE" ? null : "1";
 
@@ -123,6 +123,8 @@ namespace Titanoboa
 
         static async Task Main(string[] args)
         {
+            ThreadPool.SetMaxThreads(20, 20);
+
             var quitSignalled = new TaskCompletionSource<bool>();
             Console.CancelKeyPress += new ConsoleCancelEventHandler((sender, eventArgs) => {
                 quitSignalled.SetResult(true);
